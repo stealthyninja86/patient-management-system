@@ -2,3 +2,30 @@
 /.obsidian/
 /notes.md
 /patient-service/db_volumes/
+
+# Sensitive files with secrets
+.env
+*application*.properties
+credentials.json
+*.log
+
+# Keep docker-compose.yml - needed for project
+
+# Build outputs
+target/
+*.class
+*.jar
+*.war
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Docker
+*.dockerignore
