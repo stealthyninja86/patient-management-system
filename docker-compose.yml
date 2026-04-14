@@ -32,7 +32,7 @@ services:
     ports:
       - "5000:5432"
     volumes:
-      - patient-service-db:/var/lib/postgresql
+      - ./patient-service/patient-service-db:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin_user -d db"]
       interval: 10s
@@ -48,8 +48,6 @@ services:
       context: ./patient-service
       dockerfile: Dockerfile
     container_name: patient-service
-    ports:
-      - "4000:4000"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://patient-service-db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
@@ -119,7 +117,7 @@ services:
     ports:
       - "5001:5432"
     volumes:
-      - auth-service-db:/var/lib/postgresql
+      - ./auth-service/auth-service-db:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin_user -d db"]
       interval: 10s
@@ -128,10 +126,25 @@ services:
     networks:
       - internal
 
+  auth-service:
+    image: auth-service:latest
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-service-db:5432/db
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+      JWT_SECRET: dGhpc0lzQVZlcnlTZWN1cmVTZWNyZXRLZXlGb3JKV1RUb2tlbkdlbmVyYXRpb24xMjM0NTY3OA==
+    depends_on:
+      auth-service-db:
+        condition: service_healthy
+    networks:
+      - internal
+
 networks:
   internal:
     external: true
-
-volumes:
-  patient-service-db:
-  auth-service-db:

@@ -1,7 +1,12 @@
 /.idea/
 /.obsidian/
+/images/
 /notes.md
 /patient-service/db_volumes/
+
+# Database folders
+/patient-service/patient-service-db/
+/auth-service/auth-service-db/
 
 # Sensitive files with secrets
 .env
