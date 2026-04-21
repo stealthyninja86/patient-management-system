@@ -1,6 +1,6 @@
 package com.pms.apigateway.routes;
 
-import com.pms.pms.apigateway.filter.JwtValidationGatewayFilterFactory;
+import com.pms.apigateway.filter.JwtValidationGatewayFilterFactory;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +29,10 @@ public class Routes {
                 .route("auth-service-route", r -> r
                         .path("/auth/**")
                         .filters(f -> f.stripPrefix(1))
+                        .uri("http://auth-service:4005"))
+                .route("api-docs-auth-route", r -> r
+                        .path("/api-docs/auth")
+                        .filters(f -> f.rewritePath("/api-docs/auth", "/v3/api-docs"))
                         .uri("http://auth-service:4005"))
                 .build();
     }

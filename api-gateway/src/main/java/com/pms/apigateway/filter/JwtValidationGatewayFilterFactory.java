@@ -1,4 +1,4 @@
-package com.pms.pms.apigateway.filter;
+package com.pms.apigateway.filter;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -33,7 +33,11 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                     .header(HttpHeaders.AUTHORIZATION, token)
                     .retrieve()
                     .toBodilessEntity()
-                    .then(chain.filter(exchange));
+                    .then(chain.filter(exchange))
+                    .onErrorResume(Exception.class, e -> {
+                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        return exchange.getResponse().setComplete();
+                    });
         };
     }
 }
