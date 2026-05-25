@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "hospital";
+
+service HospitalService {
+  rpc GetDoctorById(DoctorByIdRequest) returns (DoctorResponse);
+  rpc GetDepartmentById(DepartmentByIdRequest) returns (DepartmentResponse);
+}
+
+message DoctorByIdRequest {
+  string doctorId = 1;
+}
+
+message DoctorResponse {
+  string doctorId = 1;
+  string name = 2;
+  string departmentId = 3;
+}
+
+message DepartmentByIdRequest {
+  string departmentId = 1;
+}
+
+message DepartmentResponse {
+  string departmentId = 1;
+  string name = 2;
+  string hospitalId = 3;
+  string hospitalName = 4;
+}

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "patient";
+
+service PatientService {
+  rpc GetPatientById(PatientByIdRequest) returns (PatientResponse);
+}
+
+message PatientByIdRequest {
+  string patientId = 1;
+}
+
+message PatientResponse {
+  string id = 1;
+  string patientId = 2;
+  string email = 5;
+  string address = 6;
+  string dateOfBirth = 7;
+  string doctorId = 8;
+  string name = 9;
+}

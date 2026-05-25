@@ -145,6 +145,133 @@ services:
     networks:
       - internal
 
+  # PostgreSQL for hospital-service
+  hospital-service-db:
+    image: postgres:latest
+    container_name: hospital-service-db
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5002:5432"
+    volumes:
+      - ./hospital-service/hospital-service-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # Hospital Service
+  hospital-service:
+    image: hospital-service:latest
+    build:
+      context: ./hospital-service
+      dockerfile: Dockerfile
+    container_name: hospital-service
+    ports:
+      - "4003:4003"
+      - "9003:9003"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://hospital-service-db:5432/db
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+    depends_on:
+      hospital-service-db:
+        condition: service_healthy
+    networks:
+      - internal
+
+  # PostgreSQL for clinical-service
+  clinical-service-db:
+    image: postgres:latest
+    container_name: clinical-service-db
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5004:5432"
+    volumes:
+      - ./clinical-service/clinical-service-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # Clinical Service
+  clinical-service:
+    image: clinical-service:latest
+    build:
+      context: ./clinical-service
+      dockerfile: Dockerfile
+    container_name: clinical-service
+    ports:
+      - "4010:4010"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://clinical-service-db:5432/db
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+    depends_on:
+      clinical-service-db:
+        condition: service_healthy
+    networks:
+      - internal
+
+  # PostgreSQL for schedule-service
+  schedule-service-db:
+    image: postgres:latest
+    container_name: schedule-service-db
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5003:5432"
+    volumes:
+      - ./schedule-service/schedule-service-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # Schedule Service
+  schedule-service:
+    image: schedule-service:latest
+    build:
+      context: ./schedule-service
+      dockerfile: Dockerfile
+    container_name: schedule-service
+    ports:
+      - "4009:4009"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://schedule-service-db:5432/db
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      schedule-service-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - internal
+
 networks:
   internal:
     external: true

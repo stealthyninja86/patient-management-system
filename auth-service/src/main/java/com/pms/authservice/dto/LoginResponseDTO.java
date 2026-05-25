@@ -1,13 +1,12 @@
 package com.pms.authservice.dto;
 
-public class LoginResponseDTO {
-    private final String token;
+public record LoginResponseDTO(String token, String role, String doctorId, String patientId) {
 
-    public LoginResponseDTO(String token) {
-        this.token = token;
+    public static LoginResponseDTO forPatient(String token, String patientId) {
+        return new LoginResponseDTO(token, "PATIENT", null, patientId);
     }
 
-    public String getToken() {
-        return token;
+    public static LoginResponseDTO forDoctor(String token, String doctorId) {
+        return new LoginResponseDTO(token, "DOCTOR", doctorId, null);
     }
 }

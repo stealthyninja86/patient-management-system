@@ -18,6 +18,7 @@ public class GlobalExceptionHandler {
     //handles jpa errors
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String,String>> handleValidationException(MethodArgumentNotValidException e) {
+        log.warn("Validation exception: {}", e.getMessage());
         Map<String,String> errors = new HashMap<>();
 
         e.getBindingResult().getFieldErrors()
