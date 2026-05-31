@@ -6,5 +6,8 @@ public record HospitalResponseDTO(
         String hospitalId,
         String name,
         String address,
+        String website,
+        String email,
+        String phone,
         List<DepartmentResponseDTO> departments
 ) {}

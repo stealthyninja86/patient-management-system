@@ -1,14 +1,17 @@
 package com.pms.clinicalservice.repository;
 
 import com.pms.clinicalservice.model.Prescription;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface PrescriptionRepository extends JpaRepository<Prescription, UUID> {
+public interface PrescriptionRepository extends JpaRepository<Prescription, UUID>, JpaSpecificationExecutor<Prescription> {
     List<Prescription> findByDoctorId(String doctorId);
     List<Prescription> findByPatientId(String patientId);
     Optional<Prescription> findByPrescriptionId(String prescriptionId);
+    Optional<Prescription> findByIdempotencyKey(String idempotencyKey);
 }

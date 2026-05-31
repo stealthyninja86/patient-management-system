@@ -69,7 +69,12 @@ public class HospitalService {
         }
 
         hospital = hospitalRepository.save(hospital);
-        return HospitalFactory.toResponseDTO(hospital);
+        List<DepartmentResponseDTO> deptDTOs = hospital.getDepartmentList() != null
+                ? hospital.getDepartmentList().stream()
+                    .map(DepartmentFactory::toResponseDTO)
+                    .collect(Collectors.toList())
+                : List.of();
+        return HospitalFactory.toResponseDTO(hospital, deptDTOs);
     }
 
     public List<HospitalResponseDTO> getAllHospitals() {

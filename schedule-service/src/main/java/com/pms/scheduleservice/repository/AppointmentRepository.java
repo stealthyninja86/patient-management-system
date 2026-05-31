@@ -1,6 +1,7 @@
 package com.pms.scheduleservice.repository;
 
 import com.pms.scheduleservice.model.Appointment;
+import com.pms.scheduleservice.model.AppointmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,7 +18,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     List<Appointment> findByDoctorId(String doctorId);
 
-    List<Appointment> findByHospitalId(String hospitalId);
-
     List<Appointment> findByTimeSlotId(String timeSlotId);
+
+    Optional<Appointment> findByTimeSlotIdAndStatusIn(String timeSlotId, List<AppointmentStatus> statuses);
+
+    boolean existsByDoctorIdAndPatientIdAndStatus(String doctorId, String patientId, AppointmentStatus appointmentStatus);
+
+    Optional<Appointment> findFirstByDoctorIdAndPatientIdAndStatus(String doctorId, String patientId, AppointmentStatus appointmentStatus);
 }

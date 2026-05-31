@@ -2,7 +2,6 @@ package com.pms.hospitalservice.facade;
 
 import com.pms.hospitalservice.dto.HospitalRequestDTO;
 import com.pms.hospitalservice.dto.HospitalResponseDTO;
-import com.pms.hospitalservice.repository.HospitalRepository;
 import com.pms.hospitalservice.service.HospitalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +15,9 @@ public class HospitalFacade {
     private static final Logger log = LoggerFactory.getLogger(HospitalFacade.class);
 
     private final HospitalService hospitalService;
-    private final HospitalRepository hospitalRepository;
 
-    public HospitalFacade(HospitalService hospitalService, HospitalRepository hospitalRepository) {
+    public HospitalFacade(HospitalService hospitalService) {
         this.hospitalService = hospitalService;
-        this.hospitalRepository = hospitalRepository;
     }
 
     public List<HospitalResponseDTO> getAllHospitals() {

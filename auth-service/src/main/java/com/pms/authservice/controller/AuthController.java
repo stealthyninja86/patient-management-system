@@ -9,6 +9,7 @@ import com.pms.authservice.dto.RegisterResponseDTO;
 import com.pms.authservice.exception.InvalidCredentialsException;
 import com.pms.authservice.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,16 +30,11 @@ public class AuthController {
 
     @Operation(summary = "Generate token on user login")
     @PostMapping("/login")
-    ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+    ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
         logger.info("Login attempt for email: {}", loginRequestDTO.getEmail());
-        try {
-            LoginResponseDTO response = authService.authenticate(loginRequestDTO);
-            logger.info("Login successful for email: {}", loginRequestDTO.getEmail());
-            return ResponseEntity.ok(response);
-        } catch (InvalidCredentialsException e) {
-            logger.warn("Login failed for email: {}", loginRequestDTO.getEmail());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        LoginResponseDTO response = authService.authenticate(loginRequestDTO);
+        logger.info("Login successful for email: {}", loginRequestDTO.getEmail());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Validate token")
@@ -72,12 +68,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDTO> register(@RequestBody RegisterRequestDTO request) {
         logger.info("Registration request for email: {} and role: {}", request.email(), request.role());
-        try {
-            RegisterResponseDTO response = authService.register(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Registration failed", e);
-            return ResponseEntity.badRequest().build();
-        }
+        RegisterResponseDTO response = authService.register(request);
+        return ResponseEntity.ok(response);
     }
 }

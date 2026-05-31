@@ -17,19 +17,10 @@ public class TimeSlot {
 
     private String doctorId;
     private String doctorName;
-    private String hospitalId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    @Enumerated(EnumType.STRING)
-    private TimeSlotStatus status;
-
     public TimeSlot() {
-    }
-
-    @PrePersist
-    public void prePersist() {
-        if (status == null) status = TimeSlotStatus.AVAILABLE;
     }
 
     public UUID getId() {
@@ -64,14 +55,6 @@ public class TimeSlot {
         this.doctorName = doctorName;
     }
 
-    public String getHospitalId() {
-        return hospitalId;
-    }
-
-    public void setHospitalId(String hospitalId) {
-        this.hospitalId = hospitalId;
-    }
-
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -86,13 +69,5 @@ public class TimeSlot {
 
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
-    }
-
-    public TimeSlotStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TimeSlotStatus status) {
-        this.status = status;
     }
 }

@@ -2,11 +2,10 @@ package com.pms.scheduleservice.service;
 
 import com.pms.scheduleservice.dto.TimeSlotRequestDTO;
 import com.pms.scheduleservice.dto.TimeSlotResponseDTO;
-import com.pms.scheduleservice.exception.AppointmentNotFoundException;
 import com.pms.scheduleservice.exception.TimeSlotNotFoundException;
 import com.pms.scheduleservice.factory.TimeSlotFactory;
+import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;
-import com.pms.scheduleservice.model.TimeSlotStatus;
 import com.pms.scheduleservice.repository.AppointmentRepository;
 import com.pms.scheduleservice.repository.TimeSlotRepository;
 import com.pms.scheduleservice.util.IdGenerator;
@@ -61,14 +60,12 @@ public class TimeSlotService {
 
     public List<TimeSlotResponseDTO> getAvailableTimeSlotsByDoctor(String doctorId) {
         log.debug("Fetching available time slots by doctor: {}", doctorId);
-        return timeSlotRepository.findByDoctorIdAndStatus(doctorId, TimeSlotStatus.AVAILABLE).stream()
-                .map(timeSlotFactory::toResponseDTO)
-                .toList();
-    }
-
-    public List<TimeSlotResponseDTO> getTimeSlotsByHospital(String hospitalId) {
-        log.debug("Fetching time slots by hospital: {}", hospitalId);
-        return timeSlotRepository.findByHospitalId(hospitalId).stream()
+        List<TimeSlot> allSlots = timeSlotRepository.findByDoctorId(doctorId);
+        return allSlots.stream()
+                .filter(slot -> appointmentRepository
+                        .findByTimeSlotIdAndStatusIn(slot.getTimeSlotId(),
+                                List.of(AppointmentStatus.BOOKED, AppointmentStatus.ONGOING))
+                        .isEmpty())
                 .map(timeSlotFactory::toResponseDTO)
                 .toList();
     }
@@ -78,26 +75,6 @@ public class TimeSlotService {
         log.info("Creating time slot for doctor: {}", request.doctorId());
         String timeSlotId = idGenerator.nextId("TS", "time_slot_seq");
         TimeSlot timeSlot = timeSlotFactory.toEntity(request, timeSlotId);
-        timeSlot = timeSlotRepository.save(timeSlot);
-        return timeSlotFactory.toResponseDTO(timeSlot);
-    }
-
-    @Transactional
-    public TimeSlotResponseDTO updateTimeSlotStatus(String timeSlotId, TimeSlotStatus status) {
-        log.debug("Updating time slot status: {} to {}", timeSlotId, status);
-        TimeSlot timeSlot = timeSlotRepository.findByTimeSlotId(timeSlotId)
-                .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + timeSlotId));
-        timeSlot.setStatus(status);
-        timeSlot = timeSlotRepository.save(timeSlot);
-        return timeSlotFactory.toResponseDTO(timeSlot);
-    }
-
-    @Transactional
-    public TimeSlotResponseDTO expireTimeSlot(String timeSlotId) {
-        log.debug("Expiring time slot: {}", timeSlotId);
-        TimeSlot timeSlot = timeSlotRepository.findByTimeSlotId(timeSlotId)
-                .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + timeSlotId));
-        timeSlot.setStatus(TimeSlotStatus.EXPIRED);
         timeSlot = timeSlotRepository.save(timeSlot);
         return timeSlotFactory.toResponseDTO(timeSlot);
     }

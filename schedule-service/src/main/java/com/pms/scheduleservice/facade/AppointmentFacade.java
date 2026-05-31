@@ -2,7 +2,7 @@ package com.pms.scheduleservice.facade;
 
 import com.pms.scheduleservice.dto.AppointmentRequestDTO;
 import com.pms.scheduleservice.dto.AppointmentResponseDTO;
-import com.pms.scheduleservice.repository.AppointmentRepository;
+import com.pms.scheduleservice.dto.DoctorPatientDTO;
 import com.pms.scheduleservice.service.AppointmentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +16,9 @@ public class AppointmentFacade {
     private static final Logger log = LoggerFactory.getLogger(AppointmentFacade.class);
 
     private final AppointmentService appointmentService;
-    private final AppointmentRepository appointmentRepository;
 
-    public AppointmentFacade(AppointmentService appointmentService,
-                              AppointmentRepository appointmentRepository) {
+    public AppointmentFacade(AppointmentService appointmentService) {
         this.appointmentService = appointmentService;
-        this.appointmentRepository = appointmentRepository;
     }
 
     public List<AppointmentResponseDTO> getAllAppointments() {
@@ -44,9 +41,9 @@ public class AppointmentFacade {
         return appointmentService.getAppointmentsByDoctor(doctorId);
     }
 
-    public List<AppointmentResponseDTO> getAppointmentsByHospital(String hospitalId) {
-        log.debug("Fetching appointments by hospital via facade: {}", hospitalId);
-        return appointmentService.getAppointmentsByHospital(hospitalId);
+    public List<DoctorPatientDTO> getPatientsByDoctor(String doctorId) {
+        log.debug("Fetching patients by doctor via facade: {}", doctorId);
+        return appointmentService.getPatientsByDoctor(doctorId);
     }
 
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO request) {

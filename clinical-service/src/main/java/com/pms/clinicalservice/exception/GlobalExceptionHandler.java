@@ -45,6 +45,12 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidPatientPrescriptionOperationException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidPatientOperation(InvalidPatientPrescriptionOperationException ex) {
+        log.warn("Invalid patient operation: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
     @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<Map<String, Object>> handleServiceUnavailable(ServiceUnavailableException ex) {
         log.warn("Service unavailable: {}", ex.getMessage());

@@ -9,6 +9,8 @@ import com.pms.scheduleservice.model.TimeSlot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.format.DateTimeFormatter;
+
 public class AppointmentFactory {
 
     private static final Logger log = LoggerFactory.getLogger(AppointmentFactory.class);
@@ -18,13 +20,12 @@ public class AppointmentFactory {
         Appointment appointment = new Appointment();
         appointment.setAppointmentId(appointmentId);
         appointment.setPatientId(request.patientId());
-        appointment.setPatientName(request.patientName());
-        appointment.setPatientEmail(request.patientEmail());
-        appointment.setDoctorId(request.doctorId());
+        appointment.setDoctorId(timeSlot.getDoctorId());
         appointment.setDoctorName(timeSlot.getDoctorName());
         appointment.setTimeSlotId(request.timeSlotId());
-        appointment.setHospitalId(request.hospitalId());
-        appointment.setHospitalName(request.hospitalName());
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm a");
+        appointment.setTimeSlotName(
+            timeSlot.getStartTime().format(fmt) + " - " + timeSlot.getEndTime().format(fmt));
         appointment.setStatus(AppointmentStatus.BOOKED);
         return appointment;
     }
@@ -39,8 +40,7 @@ public class AppointmentFactory {
             appointment.getDoctorId(),
             appointment.getDoctorName(),
             appointment.getTimeSlotId(),
-            appointment.getHospitalId(),
-            appointment.getHospitalName(),
+            appointment.getTimeSlotName(),
             appointment.getStatus(),
             appointment.getCreatedAt()
         );
@@ -56,8 +56,6 @@ public class AppointmentFactory {
         dto.setPatientEmail(appointment.getPatientEmail());
         dto.setDoctorId(appointment.getDoctorId());
         dto.setDoctorName(appointment.getDoctorName());
-        dto.setHospitalId(appointment.getHospitalId());
-        dto.setHospitalName(appointment.getHospitalName());
         dto.setTimeSlotId(appointment.getTimeSlotId());
         dto.setStatus(appointment.getStatus().name());
         return dto;

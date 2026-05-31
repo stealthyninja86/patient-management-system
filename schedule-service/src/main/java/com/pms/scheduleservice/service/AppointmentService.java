@@ -2,6 +2,9 @@ package com.pms.scheduleservice.service;
 
 import com.pms.scheduleservice.dto.AppointmentRequestDTO;
 import com.pms.scheduleservice.dto.AppointmentResponseDTO;
+import com.pms.scheduleservice.dto.DoctorPatientDTO;
+import com.pms.scheduleservice.exception.PatientNotFoundException;
+import com.pms.scheduleservice.grpc.PatientGrpcClient;
 import com.pms.scheduleservice.exception.AppointmentNotFoundException;
 import com.pms.scheduleservice.exception.InvalidAppointmentOperationException;
 import com.pms.scheduleservice.exception.TimeSlotNotAvailableException;
@@ -10,7 +13,6 @@ import com.pms.scheduleservice.factory.AppointmentFactory;
 import com.pms.scheduleservice.model.Appointment;
 import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;
-import com.pms.scheduleservice.model.TimeSlotStatus;
 import com.pms.scheduleservice.repository.AppointmentRepository;
 import com.pms.scheduleservice.repository.TimeSlotRepository;
 import com.pms.scheduleservice.util.IdGenerator;
@@ -31,17 +33,20 @@ public class AppointmentService {
     private final AppointmentKafkaProducer kafkaProducer;
     private final IdGenerator idGenerator;
     private final AppointmentFactory appointmentFactory;
+    private final PatientGrpcClient patientGrpcClient;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                                TimeSlotRepository timeSlotRepository,
                                AppointmentKafkaProducer kafkaProducer,
                                IdGenerator idGenerator,
-                               AppointmentFactory appointmentFactory) {
+                               AppointmentFactory appointmentFactory,
+                               PatientGrpcClient patientGrpcClient) {
         this.appointmentRepository = appointmentRepository;
         this.timeSlotRepository = timeSlotRepository;
         this.kafkaProducer = kafkaProducer;
         this.idGenerator = idGenerator;
         this.appointmentFactory = appointmentFactory;
+        this.patientGrpcClient = patientGrpcClient;
     }
 
     public List<AppointmentResponseDTO> getAllAppointments() {
@@ -72,28 +77,38 @@ public class AppointmentService {
                 .toList();
     }
 
-    public List<AppointmentResponseDTO> getAppointmentsByHospital(String hospitalId) {
-        log.debug("Fetching appointments by hospital: {}", hospitalId);
-        return appointmentRepository.findByHospitalId(hospitalId).stream()
-                .map(appointmentFactory::toResponseDTO)
+    public List<DoctorPatientDTO> getPatientsByDoctor(String doctorId) {
+        log.debug("Fetching patients by doctor: {}", doctorId);
+        return appointmentRepository.findByDoctorId(doctorId).stream()
+                .map(a -> new DoctorPatientDTO(a.getPatientId(), a.getPatientName(), a.getPatientEmail()))
+                .distinct()
                 .toList();
     }
 
     @Transactional
     public AppointmentResponseDTO createAppointment(AppointmentRequestDTO request) {
         log.info("Creating appointment for patient: {}, timeSlot: {}", request.patientId(), request.timeSlotId());
+
+        patient.PatientResponse patientResponse;
+        try {
+            patientResponse = patientGrpcClient.getPatientById(request.patientId());
+        } catch (Exception e) {
+            throw new PatientNotFoundException("Patient not found with id: " + request.patientId());
+        }
+
         TimeSlot timeSlot = timeSlotRepository.findByTimeSlotId(request.timeSlotId())
                 .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + request.timeSlotId()));
 
-        if (timeSlot.getStatus() != TimeSlotStatus.AVAILABLE) {
+        boolean slotBooked = appointmentRepository.findByTimeSlotIdAndStatusIn(request.timeSlotId(),
+                List.of(AppointmentStatus.BOOKED, AppointmentStatus.ONGOING)).isPresent();
+        if (slotBooked) {
             throw new TimeSlotNotAvailableException("TimeSlot is not available: " + request.timeSlotId());
         }
 
-        timeSlot.setStatus(TimeSlotStatus.BOOKED);
-        timeSlotRepository.save(timeSlot);
-
         String appointmentId = idGenerator.nextId("APT", "appointment_seq");
         Appointment appointment = appointmentFactory.toEntity(request, appointmentId, timeSlot);
+        appointment.setPatientName(patientResponse.getName());
+        appointment.setPatientEmail(patientResponse.getEmail());
         appointment = appointmentRepository.save(appointment);
 
         kafkaProducer.sendAppointmentBookedEvent(appointment);
@@ -119,18 +134,10 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findByAppointmentId(appointmentId)
                 .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
 
-        if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
-            throw new InvalidAppointmentOperationException("Appointment is already cancelled");
-        }
+        validateTransition(appointment.getStatus(), AppointmentStatus.CANCELLED);
 
-        String tsId = appointment.getTimeSlotId();
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment = appointmentRepository.save(appointment);
-
-        TimeSlot timeSlot = timeSlotRepository.findByTimeSlotId(tsId)
-                .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + tsId));
-        timeSlot.setStatus(TimeSlotStatus.AVAILABLE);
-        timeSlotRepository.save(timeSlot);
 
         kafkaProducer.sendAppointmentStatusChangedEvent(appointment);
 
@@ -144,20 +151,15 @@ public class AppointmentService {
                 .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
 
         String oldTsId = appointment.getTimeSlotId();
-        TimeSlot oldTimeSlot = timeSlotRepository.findByTimeSlotId(oldTsId)
-                .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + oldTsId));
-        oldTimeSlot.setStatus(TimeSlotStatus.AVAILABLE);
-        timeSlotRepository.save(oldTimeSlot);
 
         TimeSlot newTimeSlot = timeSlotRepository.findByTimeSlotId(newTimeSlotId)
                 .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + newTimeSlotId));
 
-        if (newTimeSlot.getStatus() != TimeSlotStatus.AVAILABLE) {
+        boolean newSlotBooked = appointmentRepository.findByTimeSlotIdAndStatusIn(newTimeSlotId,
+                List.of(AppointmentStatus.BOOKED, AppointmentStatus.ONGOING)).isPresent();
+        if (newSlotBooked) {
             throw new TimeSlotNotAvailableException("New TimeSlot is not available: " + newTimeSlotId);
         }
-
-        newTimeSlot.setStatus(TimeSlotStatus.BOOKED);
-        timeSlotRepository.save(newTimeSlot);
 
         appointment.setTimeSlotId(newTimeSlotId);
         appointment = appointmentRepository.save(appointment);
@@ -194,24 +196,32 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findByAppointmentId(appointmentId)
                 .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
 
-        String tsId = appointment.getTimeSlotId();
+        validateTransition(appointment.getStatus(), newStatus);
+
         appointment.setStatus(newStatus);
+        if (newStatus == AppointmentStatus.COMPLETED) {
+            appointment.setAppointmentCompleted(true);
+        }
         appointment = appointmentRepository.save(appointment);
-
-        TimeSlot timeSlot = timeSlotRepository.findByTimeSlotId(tsId)
-                .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + tsId));
-
-        TimeSlotStatus timeSlotStatus = switch (newStatus) {
-            case ONGOING -> TimeSlotStatus.ONGOING;
-            case COMPLETED -> TimeSlotStatus.COMPLETED;
-            case CANCELLED, NO_SHOW -> TimeSlotStatus.AVAILABLE;
-            default -> timeSlot.getStatus();
-        };
-        timeSlot.setStatus(timeSlotStatus);
-        timeSlotRepository.save(timeSlot);
 
         kafkaProducer.sendAppointmentStatusChangedEvent(appointment);
 
         return appointmentFactory.toResponseDTO(appointment);
+    }
+
+    private void validateTransition(AppointmentStatus current, AppointmentStatus next) {
+        if (current == next) {
+            throw new InvalidAppointmentOperationException(
+                "Appointment is already " + current.name().toLowerCase());
+        }
+        boolean valid = switch (current) {
+            case BOOKED -> next == AppointmentStatus.ONGOING || next == AppointmentStatus.CANCELLED;
+            case ONGOING -> next == AppointmentStatus.COMPLETED || next == AppointmentStatus.CANCELLED;
+            case COMPLETED, CANCELLED -> false;
+        };
+        if (!valid) {
+            throw new InvalidAppointmentOperationException(
+                "Cannot transition appointment from " + current + " to " + next);
+        }
     }
 }

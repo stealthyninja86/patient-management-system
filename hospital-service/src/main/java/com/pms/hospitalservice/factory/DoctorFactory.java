@@ -7,6 +7,8 @@ import com.pms.hospitalservice.model.Doctor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 public class DoctorFactory {
 
     private static final Logger log = LoggerFactory.getLogger(DoctorFactory.class);

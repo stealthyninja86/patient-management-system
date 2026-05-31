@@ -3,7 +3,6 @@ package com.pms.scheduleservice.controller;
 import com.pms.scheduleservice.dto.TimeSlotRequestDTO;
 import com.pms.scheduleservice.dto.TimeSlotResponseDTO;
 import com.pms.scheduleservice.facade.TimeSlotFacade;
-import com.pms.scheduleservice.model.TimeSlotStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -49,30 +48,11 @@ public class TimeSlotController {
         return ResponseEntity.ok(timeSlotFacade.getAvailableTimeSlotsByDoctor(doctorId));
     }
 
-    @GetMapping("/by-hospital/{hospitalId}")
-    public ResponseEntity<List<TimeSlotResponseDTO>> getTimeSlotsByHospital(@PathVariable String hospitalId) {
-        log.info("REST request to get time slots by hospital: {}", hospitalId);
-        return ResponseEntity.ok(timeSlotFacade.getTimeSlotsByHospital(hospitalId));
-    }
-
     @PostMapping
     public ResponseEntity<TimeSlotResponseDTO> createTimeSlot(@RequestBody TimeSlotRequestDTO request) {
         log.info("REST request to create time slot for doctor: {}", request.doctorId());
         TimeSlotResponseDTO response = timeSlotFacade.createTimeSlot(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @PostMapping("/{id}/expire")
-    public ResponseEntity<TimeSlotResponseDTO> expireTimeSlot(@PathVariable String id) {
-        log.info("REST request to expire time slot: {}", id);
-        return ResponseEntity.ok(timeSlotFacade.expireTimeSlot(id));
-    }
-
-    @PutMapping("/{id}/status")
-    public ResponseEntity<TimeSlotResponseDTO> updateTimeSlotStatus(@PathVariable String id,
-                                                                     @RequestBody TimeSlotStatus status) {
-        log.info("REST request to update time slot status: {} to {}", id, status);
-        return ResponseEntity.ok(timeSlotFacade.updateTimeSlotStatus(id, status));
     }
 
     @DeleteMapping("/{id}")

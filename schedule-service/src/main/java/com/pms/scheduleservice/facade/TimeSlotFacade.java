@@ -2,8 +2,6 @@ package com.pms.scheduleservice.facade;
 
 import com.pms.scheduleservice.dto.TimeSlotRequestDTO;
 import com.pms.scheduleservice.dto.TimeSlotResponseDTO;
-import com.pms.scheduleservice.model.TimeSlotStatus;
-import com.pms.scheduleservice.repository.TimeSlotRepository;
 import com.pms.scheduleservice.service.TimeSlotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +16,9 @@ public class TimeSlotFacade {
     private static final Logger log = LoggerFactory.getLogger(TimeSlotFacade.class);
 
     private final TimeSlotService timeSlotService;
-    private final TimeSlotRepository timeSlotRepository;
 
-    public TimeSlotFacade(TimeSlotService timeSlotService,
-                           TimeSlotRepository timeSlotRepository) {
+    public TimeSlotFacade(TimeSlotService timeSlotService) {
         this.timeSlotService = timeSlotService;
-        this.timeSlotRepository = timeSlotRepository;
     }
 
     public List<TimeSlotResponseDTO> getAllTimeSlots() {
@@ -46,24 +41,9 @@ public class TimeSlotFacade {
         return timeSlotService.getAvailableTimeSlotsByDoctor(doctorId);
     }
 
-    public List<TimeSlotResponseDTO> getTimeSlotsByHospital(String hospitalId) {
-        log.debug("Fetching time slots by hospital via facade: {}", hospitalId);
-        return timeSlotService.getTimeSlotsByHospital(hospitalId);
-    }
-
     public TimeSlotResponseDTO createTimeSlot(TimeSlotRequestDTO request) {
         log.debug("Creating time slot via facade for doctor: {}", request.doctorId());
         return timeSlotService.createTimeSlot(request);
-    }
-
-    public TimeSlotResponseDTO expireTimeSlot(String timeSlotId) {
-        log.debug("Expiring time slot via facade: {}", timeSlotId);
-        return timeSlotService.expireTimeSlot(timeSlotId);
-    }
-
-    public TimeSlotResponseDTO updateTimeSlotStatus(String timeSlotId, TimeSlotStatus status) {
-        log.debug("Updating time slot status via facade: {} to {}", timeSlotId, status);
-        return timeSlotService.updateTimeSlotStatus(timeSlotId, status);
     }
 
     public void deleteTimeSlot(UUID id) {

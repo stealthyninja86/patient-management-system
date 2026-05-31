@@ -11,6 +11,7 @@ service HospitalService {
   rpc GetAllHospitals(Empty) returns (HospitalListResponse);
   rpc GetAllDepartments(DepartmentByHospitalRequest) returns (DepartmentListResponse);
   rpc DeleteDoctor(DeleteDoctorRequest) returns (DeleteDoctorResponse);
+  rpc GetHospitalById(HospitalByIdRequest) returns (HospitalResponse);
 }
 
 message DoctorByIdRequest {
@@ -24,11 +25,17 @@ message DoctorByEmailRequest {
 message DoctorResponse {
   string doctorId = 1;
   string name = 2;
+  string email = 3;
   string departmentId = 4;
+  string phone = 5;
 }
 
 message DepartmentByIdRequest {
   string departmentId = 1;
+}
+
+message HospitalByIdRequest {
+  string hospitalId = 1;
 }
 
 message DepartmentResponse {
@@ -50,6 +57,9 @@ message HospitalResponse{
   string hospitalId = 1;
   string name = 2;
   string address = 3;
+  string website = 4;
+  string email = 5;
+  string phone = 6;
 }
 
 message Empty{}

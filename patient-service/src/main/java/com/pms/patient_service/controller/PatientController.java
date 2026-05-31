@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +38,7 @@ public class PatientController {
     @Operation(summary = "Create Patient")
     public ResponseEntity<PatientResponseDTO> createPatient(@RequestBody PatientRequestDTO dto) {
         log.info("REST request to create patient with email: {}", dto.getEmail());
-        return ResponseEntity.ok(patientFacade.createPatient(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(patientFacade.createPatient(dto));
     }
 
     @PutMapping("/{id}")

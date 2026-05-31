@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.UUID;
 
 public class HospitalFactory {
 
@@ -18,6 +19,9 @@ public class HospitalFactory {
         return Hospital.builder()
                 .name(dto.name())
                 .address(dto.address())
+                .website(dto.website())
+                .email(dto.email())
+                .phone(dto.phone())
                 .build();
     }
 
@@ -37,6 +41,9 @@ public class HospitalFactory {
                 hospital.getHospitalId(),
                 hospital.getName(),
                 hospital.getAddress(),
+                hospital.getWebsite(),
+                hospital.getEmail(),
+                hospital.getPhone(),
                 List.of()
         );
     }
@@ -47,6 +54,9 @@ public class HospitalFactory {
                 hospital.getHospitalId(),
                 hospital.getName(),
                 hospital.getAddress(),
+                hospital.getWebsite(),
+                hospital.getEmail(),
+                hospital.getPhone(),
                 departments
         );
     }

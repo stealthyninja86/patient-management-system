@@ -3,28 +3,18 @@ package com.pms.hospitalservice.grpc;
 import com.pms.hospitalservice.factory.DoctorFactory;
 import com.pms.hospitalservice.model.Department;
 import com.pms.hospitalservice.model.Doctor;
+import com.pms.hospitalservice.model.Hospital;
 import com.pms.hospitalservice.repository.DepartmentRepository;
 import com.pms.hospitalservice.repository.DoctorRepository;
 import com.pms.hospitalservice.repository.HospitalRepository;
 import com.pms.hospitalservice.util.IdGenerator;
-import hospital.HospitalServiceGrpc;
-import hospital.DoctorByIdRequest;
-import hospital.DoctorResponse;
-import hospital.CreateDoctorRequest;
-import hospital.DepartmentByIdRequest;
-import hospital.DepartmentResponse;
-import hospital.DepartmentByHospitalRequest;
-import hospital.DepartmentListResponse;
-import hospital.Empty;
-import hospital.HospitalListResponse;
-import hospital.HospitalResponse;
-import hospital.DeleteDoctorRequest;
-import hospital.DeleteDoctorResponse;
+import hospital.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,18 +36,52 @@ public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImpl
     }
 
     @Override
+    public void getHospitalById(HospitalByIdRequest request, StreamObserver<HospitalResponse> responseStreamObserver){
+        log.info("gRPC getHospitalById: {}", request.getHospitalId());
+        try{
+            Hospital hospital = hospitalRepository.findByHospitalId(request.getHospitalId())
+                    .orElseThrow(() -> {
+                        log.warn("Hospital with id: {} not found", request.getHospitalId());
+                        return Status.NOT_FOUND
+                                .withDescription("Hospital with id: " + request.getHospitalId() + " not found")
+                                .asRuntimeException();
+                    });
+
+            HospitalResponse response = HospitalResponse.newBuilder()
+                    .setHospitalId(hospital.getHospitalId())
+                    .setName(hospital.getName())
+                    .setAddress(hospital.getAddress())
+                    .setWebsite(hospital.getWebsite())
+                    .setEmail(hospital.getEmail())
+                    .setPhone(hospital.getPhone())
+                    .build();
+
+            responseStreamObserver.onNext(response);
+            responseStreamObserver.onCompleted();
+        } catch (Exception e) {
+            log.error("Error in getHospitalById : {}", e.getMessage());
+            responseStreamObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+        }
+    }
+
+    @Override
     public void getDoctorById(DoctorByIdRequest request, StreamObserver<DoctorResponse> responseObserver) {
         log.info("gRPC getDoctorById: {}", request.getDoctorId());
         try {
-            Doctor doctor = doctorRepository.findByDoctorId(request.getDoctorId())
+            Doctor doctor = doctorRepository.findByDoctorIdWithDepartment(request.getDoctorId())
                     .orElseThrow(() -> {
                         log.warn("Doctor not found: {}", request.getDoctorId());
                         return Status.NOT_FOUND.withDescription("Doctor not found: " + request.getDoctorId()).asRuntimeException();
                     });
+            log.info("Doctor found: id={}, dept={}", doctor.getDoctorId(), doctor.getDepartment());
+            String deptId = doctor.getDepartment() != null ? doctor.getDepartment().getDepartmentId() : "NULL";
+            log.info("DepartmentId: {}", deptId);
             DoctorResponse response = DoctorResponse.newBuilder()
                     .setDoctorId(doctor.getDoctorId())
                     .setName(doctor.getName() != null ? doctor.getName() : "")
-                    .setDepartmentId(doctor.getDepartment() != null ? doctor.getDepartment().getDepartmentId() : "")
+                    .setEmail(doctor.getEmail() != null ? doctor.getEmail() : "")
+                    .setDepartmentId(deptId)
+                    .setPhone(doctor.getPhone() != null ? doctor.getPhone() : "")
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -71,7 +95,7 @@ public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImpl
     public void getDepartmentById(DepartmentByIdRequest request, StreamObserver<DepartmentResponse> responseObserver) {
         log.info("gRPC getDepartmentById: {}", request.getDepartmentId());
         try {
-            Department department = departmentRepository.findByDepartmentId(request.getDepartmentId())
+            Department department = departmentRepository.findByDepartmentIdWithHospital(request.getDepartmentId())
                     .orElseThrow(() -> {
                         log.warn("Department not found: {}", request.getDepartmentId());
                         return Status.NOT_FOUND.withDescription("Department not found: " + request.getDepartmentId()).asRuntimeException();
@@ -91,6 +115,7 @@ public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImpl
     }
 
     @Override
+    @Transactional
     public void createDoctor(CreateDoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
         log.info("gRPC createDoctor: {}", request.getName());
         try {
@@ -105,10 +130,11 @@ public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImpl
                         .ifPresent(doctor::setDepartment);
             }
             doctor = doctorRepository.save(doctor);
+            String deptId = doctor.getDepartment() != null ? doctor.getDepartment().getDepartmentId() : "";
             DoctorResponse response = DoctorResponse.newBuilder()
                     .setDoctorId(doctor.getDoctorId())
                     .setName(doctor.getName() != null ? doctor.getName() : "")
-                    .setDepartmentId(doctor.getDepartment() != null ? doctor.getDepartment().getDepartmentId() : "")
+                    .setDepartmentId(deptId)
                     .build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -146,7 +172,7 @@ public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImpl
         try {
             List<Department> departments;
             if (request.getHospitalId() != null && !request.getHospitalId().isEmpty()) {
-                com.pms.hospitalservice.model.Hospital hospital = hospitalRepository.findByHospitalId(request.getHospitalId())
+                        Hospital hospital = hospitalRepository.findByHospitalId(request.getHospitalId())
                         .orElseThrow(() -> {
                             log.warn("Hospital not found: {}", request.getHospitalId());
                             return Status.NOT_FOUND.withDescription("Hospital not found: " + request.getHospitalId()).asRuntimeException();

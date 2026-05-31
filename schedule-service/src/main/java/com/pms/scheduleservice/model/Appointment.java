@@ -1,6 +1,7 @@
 package com.pms.scheduleservice.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,17 +16,25 @@ public class Appointment {
     @Column(unique = true)
     private String appointmentId;
 
+    @NotNull
     private String patientId;
+
     private String patientName;
     private String patientEmail;
+
     private String doctorId;
     private String doctorName;
+
+    @NotNull
     private String timeSlotId;
-    private String hospitalId;
-    private String hospitalName;
+
+    private String timeSlotName;
 
     @Enumerated(EnumType.STRING)
     private AppointmentStatus status;
+
+    @Column(nullable = false)
+    private boolean appointmentCompleted = false;
 
     private LocalDateTime createdAt;
 
@@ -102,20 +111,12 @@ public class Appointment {
         this.timeSlotId = timeSlotId;
     }
 
-    public String getHospitalId() {
-        return hospitalId;
+    public String getTimeSlotName() {
+        return timeSlotName;
     }
 
-    public void setHospitalId(String hospitalId) {
-        this.hospitalId = hospitalId;
-    }
-
-    public String getHospitalName() {
-        return hospitalName;
-    }
-
-    public void setHospitalName(String hospitalName) {
-        this.hospitalName = hospitalName;
+    public void setTimeSlotName(String timeSlotName) {
+        this.timeSlotName = timeSlotName;
     }
 
     public AppointmentStatus getStatus() {
@@ -124,6 +125,14 @@ public class Appointment {
 
     public void setStatus(AppointmentStatus status) {
         this.status = status;
+    }
+
+    public boolean isAppointmentCompleted() {
+        return appointmentCompleted;
+    }
+
+    public void setAppointmentCompleted(boolean appointmentCompleted) {
+        this.appointmentCompleted = appointmentCompleted;
     }
 
     public LocalDateTime getCreatedAt() {

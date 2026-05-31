@@ -9,5 +9,8 @@ public record HospitalRequestDTO(
         @NotBlank(groups = CreateValidation.class, message = "name is required")
         String name,
         String address,
+        String website,
+        String email,
+        String phone,
         List<DepartmentRequestDTO> departments
 ) {}

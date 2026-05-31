@@ -4,6 +4,8 @@ import hospital.DepartmentByIdRequest;
 import hospital.DepartmentResponse;
 import hospital.DoctorByIdRequest;
 import hospital.DoctorResponse;
+import hospital.HospitalByIdRequest;
+import hospital.HospitalResponse;
 import hospital.HospitalServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -43,5 +45,13 @@ public class HospitalGrpcClient {
                 .setDepartmentId(departmentId)
                 .build();
         return blockingStub.getDepartmentById(request);
+    }
+
+    public HospitalResponse getHospitalById(String hospitalId) {
+        log.debug("Fetching hospital by id: {}", hospitalId);
+        HospitalByIdRequest request = HospitalByIdRequest.newBuilder()
+                .setHospitalId(hospitalId)
+                .build();
+        return blockingStub.getHospitalById(request);
     }
 }

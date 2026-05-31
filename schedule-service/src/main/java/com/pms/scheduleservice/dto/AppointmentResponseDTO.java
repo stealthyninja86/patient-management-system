@@ -11,8 +11,7 @@ public record AppointmentResponseDTO(
     String doctorId,
     String doctorName,
     String timeSlotId,
-    String hospitalId,
-    String hospitalName,
+    String timeSlotName,
     AppointmentStatus status,
     LocalDateTime createdAt
 ) {}

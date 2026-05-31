@@ -31,13 +31,13 @@ public class PatientGrpcClient {
                                           String gender, String bloodType) {
         log.debug("Creating patient via gRPC: email={}", email);
         patient.CreatePatientRequest request = patient.CreatePatientRequest.newBuilder()
-                .setName(name)
-                .setEmail(email)
-                .setPhone(phone)
-                .setAddress(address)
-                .setDateOfBirth(dateOfBirth)
-                .setGender(gender)
-                .setBloodType(bloodType)
+                .setName(name != null ? name : "")
+                .setEmail(email != null ? email : "")
+                .setPhone(phone != null ? phone : "")
+                .setAddress(address != null ? address : "")
+                .setDateOfBirth(dateOfBirth != null ? dateOfBirth : "")
+                .setGender(gender != null ? gender : "")
+                .setBloodType(bloodType != null ? bloodType : "")
                 .build();
         return blockingStub.createPatient(request);
     }

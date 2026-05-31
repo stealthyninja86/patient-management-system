@@ -2,6 +2,7 @@ package com.pms.scheduleservice.controller;
 
 import com.pms.scheduleservice.dto.AppointmentRequestDTO;
 import com.pms.scheduleservice.dto.AppointmentResponseDTO;
+import com.pms.scheduleservice.dto.DoctorPatientDTO;
 import com.pms.scheduleservice.dto.RescheduleRequestDTO;
 import com.pms.scheduleservice.facade.AppointmentFacade;
 import org.slf4j.Logger;
@@ -48,10 +49,10 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentFacade.getAppointmentsByDoctor(doctorId));
     }
 
-    @GetMapping("/by-hospital/{hospitalId}")
-    public ResponseEntity<List<AppointmentResponseDTO>> getAppointmentsByHospital(@PathVariable String hospitalId) {
-        log.info("REST request to get appointments by hospital: {}", hospitalId);
-        return ResponseEntity.ok(appointmentFacade.getAppointmentsByHospital(hospitalId));
+    @GetMapping("/by-doctor/{doctorId}/patients")
+    public ResponseEntity<List<DoctorPatientDTO>> getPatientsByDoctor(@PathVariable String doctorId) {
+        log.info("REST request to get patients by doctor: {}", doctorId);
+        return ResponseEntity.ok(appointmentFacade.getPatientsByDoctor(doctorId));
     }
 
     @PostMapping

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "schedule";
+
+service ScheduleService{
+  rpc HasOngoingAppointment(HasOngoingAppointmentRequest) returns (HasOngoingAppointmentResponse);
+}
+
+message HasOngoingAppointmentRequest{
+  string doctorId = 1;
+  string patientId = 2;
+}
+
+message HasOngoingAppointmentResponse{
+  bool hasOngoing = 1;
+  string startTime = 2;
+  string endTime = 3;
+}

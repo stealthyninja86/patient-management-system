@@ -31,11 +31,11 @@ public class HospitalGrpcClient {
                                         String departmentId, String hospitalId) {
         log.debug("Creating doctor via gRPC: email={}, departmentId={}, hospitalId={}", email, departmentId, hospitalId);
         CreateDoctorRequest request = CreateDoctorRequest.newBuilder()
-                .setName(name)
-                .setEmail(email)
-                .setPhone(phone)
-                .setDepartmentId(departmentId)
-                .setHospitalId(hospitalId)
+                .setName(name != null ? name : "")
+                .setEmail(email != null ? email : "")
+                .setPhone(phone != null ? phone : "")
+                .setDepartmentId(departmentId != null ? departmentId : "")
+                .setHospitalId(hospitalId != null ? hospitalId : "")
                 .build();
         return blockingStub.createDoctor(request);
     }
