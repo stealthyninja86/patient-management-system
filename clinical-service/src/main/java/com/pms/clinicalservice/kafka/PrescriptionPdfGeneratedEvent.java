@@ -34,19 +34,31 @@ public class PrescriptionPdfGeneratedEvent {
     @JsonProperty("version")
     private String version;
 
+    @JsonProperty
+    private String patientEmail;
+
     public PrescriptionPdfGeneratedEvent() {}
 
-    public PrescriptionPdfGeneratedEvent(String prescriptionId, String patientId,
+    public PrescriptionPdfGeneratedEvent(String prescriptionId, String patientId, String patientEmail,
                                           String doctorId, String hospitalId, String status) {
         this.eventId = UUID.randomUUID().toString();
         this.prescriptionId = prescriptionId;
         this.patientId = patientId;
+        this.patientEmail = patientEmail;
         this.doctorId = doctorId;
         this.hospitalId = hospitalId;
         this.status = status;
         this.generatedAt = Instant.now();
         this.eventType = "PRESCRIPTION_PDF_GENERATED";
         this.version = "1.0";
+    }
+
+    public String getPatientEmail() {
+        return patientEmail;
+    }
+
+    public void setPatientEmail(String patientEmail) {
+        this.patientEmail = patientEmail;
     }
 
     public String getEventId() {

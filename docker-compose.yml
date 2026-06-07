@@ -21,6 +21,15 @@ services:
     networks:
       - internal
 
+  # Redis (shared — OTP TTLs, dedup keys, rate limit counters)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - internal
+
   # PostgreSQL for patient-service
   patient-service-db:
     image: postgres:latest
@@ -279,6 +288,51 @@ services:
         condition: service_started
     networks:
       - internal
+
+  notification-service-db:
+    image: postgres:latest
+    container_name: notification-service-db
+    ports:
+      - "5014:5432"
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./notification-service/notification-service-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  notification-service:
+    image: notification-service:latest
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "4014:4014"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-service-db:5432/db
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      notification-service-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - internal
+
 
 networks:
   internal:

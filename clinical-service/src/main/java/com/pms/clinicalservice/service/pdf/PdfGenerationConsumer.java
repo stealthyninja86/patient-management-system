@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
-import org.springframework.retry.annotation.Backoff;
+import org.springframework.kafka.annotation.Backoff;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -120,6 +120,7 @@ public class PdfGenerationConsumer {
             eventProducer.sendPdfGeneratedEvent(
                 prescription.getPrescriptionId(),
                 prescription.getPatientId(),
+                prescription.getPatientEmail(),
                 prescription.getDoctorId(),
                 prescription.getHospitalId(),
                 "SUCCESS"
@@ -145,6 +146,6 @@ public class PdfGenerationConsumer {
             doc.setStatus(DocumentStatus.FAILED);
             documentRepository.save(doc);
         });
-        eventProducer.sendPdfGeneratedEvent(prescriptionId,"","","", "FAILED" );
+        eventProducer.sendPdfGeneratedEvent(prescriptionId,"","","", "","FAILED");
     }
 }

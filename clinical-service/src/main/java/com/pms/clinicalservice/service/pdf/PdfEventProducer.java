@@ -19,10 +19,10 @@ public class PdfEventProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendPdfGeneratedEvent(String prescriptionId, String patientId,
+    public void sendPdfGeneratedEvent(String prescriptionId, String patientId, String patientEmail,
                                        String doctorId, String hospitalId, String status) {
         PrescriptionPdfGeneratedEvent event = new PrescriptionPdfGeneratedEvent(
-            prescriptionId, patientId, doctorId, hospitalId, status);
+            prescriptionId, patientId, patientEmail, doctorId, hospitalId, status);
         kafkaTemplate.send(COMPLETION_TOPIC, prescriptionId, event)
             .whenComplete((result, ex) -> {
                 if (ex != null) {
