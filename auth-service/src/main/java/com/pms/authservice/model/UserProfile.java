@@ -29,8 +29,16 @@ public class UserProfile {
         this.externalId = externalId;
     }
 
-    public Long getId() { return id; }
-    public User getUser() { return user; }
-    public ProfileType getType() { return type; }
-    public String getExternalId() { return externalId; }
+    public Long getId() {
+        return id;
+    }
+    public User getUser() {
+        return user;
+    }
+    public ProfileType getType() {
+        return type;
+    }
+    public String getExternalId() {
+        return externalId;
+    }
 }

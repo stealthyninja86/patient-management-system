@@ -35,14 +35,38 @@ public record PrescriptionRequestDTO(String patientId,
 
         PrescriptionRequestDTOBuilder() {}
 
-        public PrescriptionRequestDTOBuilder patientId(String patientId) { this.patientId = patientId; return this; }
-        public PrescriptionRequestDTOBuilder drugs(List<DrugInput> drugs) { this.drugs = drugs; return this; }
-        public PrescriptionRequestDTOBuilder diagnosis(String diagnosis) { this.diagnosis = diagnosis; return this; }
-        public PrescriptionRequestDTOBuilder painScore(int painScore) { this.painScore = painScore; return this; }
-        public PrescriptionRequestDTOBuilder allergies(String allergies) { this.allergies = allergies; return this; }
-        public PrescriptionRequestDTOBuilder followUpWeeks(int followUpWeeks) { this.followUpWeeks = followUpWeeks; return this; }
-        public PrescriptionRequestDTOBuilder idempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; return this; }
-        public PrescriptionRequestDTOBuilder doctorNote(String doctorNote) { this.doctorNote = doctorNote; return this; }
+        public PrescriptionRequestDTOBuilder patientId(String patientId) {
+            this.patientId = patientId;
+            return this;
+        }
+        public PrescriptionRequestDTOBuilder drugs(List<DrugInput> drugs) {
+            this.drugs = drugs;
+            return this;
+        }
+        public PrescriptionRequestDTOBuilder diagnosis(String diagnosis) {
+            this.diagnosis = diagnosis;
+            return this;
+        }
+        public PrescriptionRequestDTOBuilder painScore(int painScore) {
+            this.painScore = painScore;
+            return this;
+        }
+        public PrescriptionRequestDTOBuilder allergies(String allergies) {
+            this.allergies = allergies;
+            return this;
+        }
+        public PrescriptionRequestDTOBuilder followUpWeeks(int followUpWeeks) {
+            this.followUpWeeks = followUpWeeks;
+            return this;
+        }
+        public PrescriptionRequestDTOBuilder idempotencyKey(String idempotencyKey) {
+            this.idempotencyKey = idempotencyKey;
+            return this;
+        }
+        public PrescriptionRequestDTOBuilder doctorNote(String doctorNote) {
+            this.doctorNote = doctorNote;
+            return this;
+        }
 
         public PrescriptionRequestDTO build() {
             return new PrescriptionRequestDTO(patientId, drugs, diagnosis, painScore, allergies, followUpWeeks, idempotencyKey, doctorNote);

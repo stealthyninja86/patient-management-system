@@ -25,8 +25,13 @@ public class UserService {
         return user;
     }
 
-    public User createUser(User user) {
-        logger.debug("Creating user: {}", user.getEmail());
+    public User saveUser(User user) {
+        logger.debug("Saving user: {}", user.getEmail());
         return userRepository.save(user);
+    }
+
+    public void deleteUser(User user) {
+        logger.debug("Deleting user: {}", user.getEmail());
+        userRepository.delete(user);
     }
 }

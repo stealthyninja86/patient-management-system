@@ -70,6 +70,18 @@ public class Routes {
                         .path("/api-docs/schedule")
                         .filters(f -> f.rewritePath("/api-docs/schedule", "/v3/api-docs"))
                         .uri("http://schedule-service:4009"))
+                .route("notification-service-route", r -> r
+                        .path("/api/notifications/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtValidationGatewayFilterFactory.apply(new Object())))
+                        .uri("http://notification-service:4014"))
+                .route("consent-route", r -> r
+                        .path("/api/consent/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtValidationGatewayFilterFactory.apply(new Object())))
+                        .uri("http://notification-service:4014"))
+                .route("api-docs-notifications", r -> r
+                        .path("/api-docs/notifications")
+                        .filters(f -> f.rewritePath("/api-docs/notifications", "/v3/api-docs"))
+                        .uri("http://notification-service:4014"))
                 .build();
     }
 }

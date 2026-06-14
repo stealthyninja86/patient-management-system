@@ -55,38 +55,82 @@ public class Otp {
         return new OtpBuilder();
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getPatientId() { return patientId; }
-    public void setPatientId(String patientId) { this.patientId = patientId; }
+    public String getPatientId() {
+        return patientId;
+    }
+    public void setPatientId(String patientId) {
+        this.patientId = patientId;
+    }
 
-    public String getDoctorId() { return doctorId; }
-    public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
+    public String getDoctorId() {
+        return doctorId;
+    }
+    public void setDoctorId(String doctorId) {
+        this.doctorId = doctorId;
+    }
 
-    public String getHospitalId() { return hospitalId; }
-    public void setHospitalId(String hospitalId) { this.hospitalId = hospitalId; }
+    public String getHospitalId() {
+        return hospitalId;
+    }
+    public void setHospitalId(String hospitalId) {
+        this.hospitalId = hospitalId;
+    }
 
-    public String getConsentRequestId() { return consentRequestId; }
-    public void setConsentRequestId(String consentRequestId) { this.consentRequestId = consentRequestId; }
+    public String getConsentRequestId() {
+        return consentRequestId;
+    }
+    public void setConsentRequestId(String consentRequestId) {
+        this.consentRequestId = consentRequestId;
+    }
 
-    public String getPhoneHash() { return phoneHash; }
-    public void setPhoneHash(String phoneHash) { this.phoneHash = phoneHash; }
+    public String getPhoneHash() {
+        return phoneHash;
+    }
+    public void setPhoneHash(String phoneHash) {
+        this.phoneHash = phoneHash;
+    }
 
-    public OtpStatus getStatus() { return status; }
-    public void setStatus(OtpStatus status) { this.status = status; }
+    public OtpStatus getStatus() {
+        return status;
+    }
+    public void setStatus(OtpStatus status) {
+        this.status = status;
+    }
 
-    public int getAttempts() { return attempts; }
-    public void setAttempts(int attempts) { this.attempts = attempts; }
+    public int getAttempts() {
+        return attempts;
+    }
+    public void setAttempts(int attempts) {
+        this.attempts = attempts;
+    }
 
-    public Instant getExpiresAt() { return expiresAt; }
-    public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+    public void setExpiresAt(Instant expiresAt) {
+        this.expiresAt = expiresAt;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 
-    public Instant getVerifiedAt() { return verifiedAt; }
-    public void setVerifiedAt(Instant verifiedAt) { this.verifiedAt = verifiedAt; }
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+    public void setVerifiedAt(Instant verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
 
     public static class OtpBuilder {
 
@@ -104,17 +148,50 @@ public class Otp {
 
         OtpBuilder() {}
 
-        public OtpBuilder id(UUID id) { this.id = id; return this; }
-        public OtpBuilder patientId(String patientId) { this.patientId = patientId; return this; }
-        public OtpBuilder doctorId(String doctorId) { this.doctorId = doctorId; return this; }
-        public OtpBuilder hospitalId(String hospitalId) { this.hospitalId = hospitalId; return this; }
-        public OtpBuilder consentRequestId(String consentRequestId) { this.consentRequestId = consentRequestId; return this; }
-        public OtpBuilder phoneHash(String phoneHash) { this.phoneHash = phoneHash; return this; }
-        public OtpBuilder status(OtpStatus status) { this.status = status; return this; }
-        public OtpBuilder attempts(int attempts) { this.attempts = attempts; return this; }
-        public OtpBuilder expiresAt(Instant expiresAt) { this.expiresAt = expiresAt; return this; }
-        public OtpBuilder createdAt(Instant createdAt) { this.createdAt = createdAt; return this; }
-        public OtpBuilder verifiedAt(Instant verifiedAt) { this.verifiedAt = verifiedAt; return this; }
+        public OtpBuilder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+        public OtpBuilder patientId(String patientId) {
+            this.patientId = patientId;
+            return this;
+        }
+        public OtpBuilder doctorId(String doctorId) {
+            this.doctorId = doctorId;
+            return this;
+        }
+        public OtpBuilder hospitalId(String hospitalId) {
+            this.hospitalId = hospitalId;
+            return this;
+        }
+        public OtpBuilder consentRequestId(String consentRequestId) {
+            this.consentRequestId = consentRequestId;
+            return this;
+        }
+        public OtpBuilder phoneHash(String phoneHash) {
+            this.phoneHash = phoneHash;
+            return this;
+        }
+        public OtpBuilder status(OtpStatus status) {
+            this.status = status;
+            return this;
+        }
+        public OtpBuilder attempts(int attempts) {
+            this.attempts = attempts;
+            return this;
+        }
+        public OtpBuilder expiresAt(Instant expiresAt) {
+            this.expiresAt = expiresAt;
+            return this;
+        }
+        public OtpBuilder createdAt(Instant createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+        public OtpBuilder verifiedAt(Instant verifiedAt) {
+            this.verifiedAt = verifiedAt;
+            return this;
+        }
 
         public Otp build() {
             return new Otp(

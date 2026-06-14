@@ -98,43 +98,137 @@ public class Prescription {
         return new PrescriptionBuilder();
     }
 
-    public UUID getId() { return id; }
-    public String getPrescriptionId() { return prescriptionId; }
-    public void setPrescriptionId(String prescriptionId) { this.prescriptionId = prescriptionId; }
-    public String getDoctorId() { return doctorId; }
-    public String getDoctorName() { return doctorName; }
-    public String getDepartmentId() { return departmentId; }
-    public String getDepartmentName() { return departmentName; }
-    public String getHospitalId() { return hospitalId; }
-    public String getHospitalName() { return hospitalName; }
-    public String getPatientId() { return patientId; }
-    public String getPatientName() { return patientName; }
-    public String getDiagnosis() { return diagnosis; }
-    public int getPainScore() { return painScore; }
-    public String getAllergies() { return allergies; }
-    public LocalDateTime getConsultationDate() { return consultationDate; }
-    public List<Drug> getDrugs() { return drugs; }
-    public PrescriptionStatus getStatus() { return status; }
-    public String getPatientPhone() { return patientPhone; }
-    public void setPatientPhone(String patientPhone) { this.patientPhone = patientPhone; }
-    public String getPatientEmail() { return patientEmail; }
-    public void setPatientEmail(String patientEmail) { this.patientEmail = patientEmail; }
-    public int getFollowUpWeeks() { return followUpWeeks; }
-    public String getHospitalWebsite() { return hospitalWebsite; }
-    public void setHospitalWebsite(String hospitalWebsite) { this.hospitalWebsite = hospitalWebsite; }
-    public String getHospitalAddress() { return hospitalAddress; }
-    public String getHospitalEmail() { return hospitalEmail; }
-    public void setHospitalEmail(String hospitalEmail) { this.hospitalEmail = hospitalEmail; }
-    public String getHospitalPhone() { return hospitalPhone; }
-    public void setHospitalPhone(String hospitalPhone) { this.hospitalPhone = hospitalPhone; }
-    public String getDoctorPhone() { return doctorPhone; }
-    public void setDoctorPhone(String doctorPhone) { this.doctorPhone = doctorPhone; }
-    public String getDoctorEmail() { return doctorEmail; }
-    public void setDoctorEmail(String doctorEmail) { this.doctorEmail = doctorEmail; }
-    public LocalDate getPatientDateOfBirth() { return patientDateOfBirth; }
-    public String getPatientGender() { return patientGender; }
-    public String getIdempotencyKey() { return idempotencyKey; }
-    public String getDoctorNote() { return doctorNote; }
+    public UUID getId() {
+        return id;
+    }
+    public String getPrescriptionId() {
+        return prescriptionId;
+    }
+    public void setPrescriptionId(String prescriptionId) {
+        this.prescriptionId = prescriptionId;
+    }
+    public String getDoctorId() {
+        return doctorId;
+    }
+    public String getDoctorName() {
+        return doctorName;
+    }
+    public String getDepartmentId() {
+        return departmentId;
+    }
+    public String getDepartmentName() {
+        return departmentName;
+    }
+    public String getHospitalId() {
+        return hospitalId;
+    }
+    public String getHospitalName() {
+        return hospitalName;
+    }
+    public String getPatientId() {
+        return patientId;
+    }
+    public String getPatientName() {
+        return patientName;
+    }
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+    public int getPainScore() {
+        return painScore;
+    }
+    public String getAllergies() {
+        return allergies;
+    }
+    public LocalDateTime getConsultationDate() {
+        return consultationDate;
+    }
+    public List<Drug> getDrugs() {
+        return drugs;
+    }
+    public PrescriptionStatus getStatus() {
+        return status;
+    }
+
+    public String getPatientPhone() {
+        return patientPhone;
+    }
+
+    public void setPatientPhone(String patientPhone) {
+        this.patientPhone = patientPhone;
+    }
+
+    public String getPatientEmail() {
+        return patientEmail;
+    }
+
+    public void setPatientEmail(String patientEmail) {
+        this.patientEmail = patientEmail;
+    }
+
+    public int getFollowUpWeeks() {
+        return followUpWeeks;
+    }
+
+    public String getHospitalWebsite() {
+        return hospitalWebsite;
+    }
+
+    public void setHospitalWebsite(String hospitalWebsite) {
+        this.hospitalWebsite = hospitalWebsite;
+    }
+
+    public String getHospitalAddress() {
+        return hospitalAddress;
+    }
+
+    public String getHospitalEmail() {
+        return hospitalEmail;
+    }
+
+    public void setHospitalEmail(String hospitalEmail) {
+        this.hospitalEmail = hospitalEmail;
+    }
+
+    public String getHospitalPhone() {
+        return hospitalPhone;
+    }
+
+    public void setHospitalPhone(String hospitalPhone) {
+        this.hospitalPhone = hospitalPhone;
+    }
+
+    public String getDoctorPhone() {
+        return doctorPhone;
+    }
+
+    public void setDoctorPhone(String doctorPhone) {
+        this.doctorPhone = doctorPhone;
+    }
+
+    public String getDoctorEmail() {
+        return doctorEmail;
+    }
+
+    public void setDoctorEmail(String doctorEmail) {
+        this.doctorEmail = doctorEmail;
+    }
+
+    public LocalDate getPatientDateOfBirth() {
+        return patientDateOfBirth;
+    }
+
+    public String getPatientGender() {
+        return patientGender;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public String getDoctorNote() {
+        return doctorNote;
+    }
 
     public static class PrescriptionBuilder {
         private UUID id;
@@ -169,35 +263,122 @@ public class Prescription {
 
         PrescriptionBuilder() {}
 
-        public PrescriptionBuilder id(UUID id) { this.id = id; return this; }
-        public PrescriptionBuilder prescriptionId(String prescriptionId) { this.prescriptionId = prescriptionId; return this; }
-        public PrescriptionBuilder doctorId(String doctorId) { this.doctorId = doctorId; return this; }
-        public PrescriptionBuilder doctorName(String doctorName) { this.doctorName = doctorName; return this; }
-        public PrescriptionBuilder departmentId(String departmentId) { this.departmentId = departmentId; return this; }
-        public PrescriptionBuilder departmentName(String departmentName) { this.departmentName = departmentName; return this; }
-        public PrescriptionBuilder hospitalId(String hospitalId) { this.hospitalId = hospitalId; return this; }
-        public PrescriptionBuilder hospitalName(String hospitalName) { this.hospitalName = hospitalName; return this; }
-        public PrescriptionBuilder patientId(String patientId) { this.patientId = patientId; return this; }
-        public PrescriptionBuilder patientName(String patientName) { this.patientName = patientName; return this; }
-        public PrescriptionBuilder diagnosis(String diagnosis) { this.diagnosis = diagnosis; return this; }
-        public PrescriptionBuilder painScore(int painScore) { this.painScore = painScore; return this; }
-        public PrescriptionBuilder allergies(String allergies) { this.allergies = allergies; return this; }
-        public PrescriptionBuilder consultationDate(LocalDateTime consultationDate) { this.consultationDate = consultationDate; return this; }
-        public PrescriptionBuilder drugs(List<Drug> drugs) { this.drugs = drugs; return this; }
-        public PrescriptionBuilder status(PrescriptionStatus status) { this.status = status; return this; }
-        public PrescriptionBuilder patientPhone(String patientPhone) { this.patientPhone = patientPhone; return this; }
-        public PrescriptionBuilder patientEmail(String patientEmail) { this.patientEmail = patientEmail; return this; }
-        public PrescriptionBuilder patientGender(String patientGender) { this.patientGender = patientGender; return this; }
-        public PrescriptionBuilder patientDateOfBirth(LocalDate patientDateOfBirth) { this.patientDateOfBirth = patientDateOfBirth; return this; }
-        public PrescriptionBuilder doctorEmail(String doctorEmail) { this.doctorEmail = doctorEmail; return this; }
-        public PrescriptionBuilder doctorPhone(String doctorPhone) { this.doctorPhone = doctorPhone; return this; }
-        public PrescriptionBuilder hospitalPhone(String hospitalPhone) { this.hospitalPhone = hospitalPhone; return this; }
-        public PrescriptionBuilder hospitalEmail(String hospitalEmail) { this.hospitalEmail = hospitalEmail; return this; }
-        public PrescriptionBuilder hospitalWebsite(String hospitalWebsite) { this.hospitalWebsite = hospitalWebsite; return this; }
-        public PrescriptionBuilder hospitalAddress(String hospitalAddress) { this.hospitalAddress = hospitalAddress; return this; }
-        public PrescriptionBuilder followUpWeeks(int followUpWeeks) { this.followUpWeeks = followUpWeeks; return this; }
-        public PrescriptionBuilder idempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; return this; }
-        public PrescriptionBuilder doctorNote(String doctorNote) { this.doctorNote = doctorNote; return this; }
+        public PrescriptionBuilder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+        public PrescriptionBuilder prescriptionId(String prescriptionId) {
+            this.prescriptionId = prescriptionId;
+            return this;
+        }
+        public PrescriptionBuilder doctorId(String doctorId) {
+            this.doctorId = doctorId;
+            return this;
+        }
+        public PrescriptionBuilder doctorName(String doctorName) {
+            this.doctorName = doctorName;
+            return this;
+        }
+        public PrescriptionBuilder departmentId(String departmentId) {
+            this.departmentId = departmentId;
+            return this;
+        }
+        public PrescriptionBuilder departmentName(String departmentName) {
+            this.departmentName = departmentName;
+            return this;
+        }
+        public PrescriptionBuilder hospitalId(String hospitalId) {
+            this.hospitalId = hospitalId;
+            return this;
+        }
+        public PrescriptionBuilder hospitalName(String hospitalName) {
+            this.hospitalName = hospitalName;
+            return this;
+        }
+        public PrescriptionBuilder patientId(String patientId) {
+            this.patientId = patientId;
+            return this;
+        }
+        public PrescriptionBuilder patientName(String patientName) {
+            this.patientName = patientName;
+            return this;
+        }
+        public PrescriptionBuilder diagnosis(String diagnosis) {
+            this.diagnosis = diagnosis;
+            return this;
+        }
+        public PrescriptionBuilder painScore(int painScore) {
+            this.painScore = painScore;
+            return this;
+        }
+        public PrescriptionBuilder allergies(String allergies) {
+            this.allergies = allergies;
+            return this;
+        }
+        public PrescriptionBuilder consultationDate(LocalDateTime consultationDate) {
+            this.consultationDate = consultationDate;
+            return this;
+        }
+        public PrescriptionBuilder drugs(List<Drug> drugs) {
+            this.drugs = drugs;
+            return this;
+        }
+        public PrescriptionBuilder status(PrescriptionStatus status) {
+            this.status = status;
+            return this;
+        }
+        public PrescriptionBuilder patientPhone(String patientPhone) {
+            this.patientPhone = patientPhone;
+            return this;
+        }
+        public PrescriptionBuilder patientEmail(String patientEmail) {
+            this.patientEmail = patientEmail;
+            return this;
+        }
+        public PrescriptionBuilder patientGender(String patientGender) {
+            this.patientGender = patientGender;
+            return this;
+        }
+        public PrescriptionBuilder patientDateOfBirth(LocalDate patientDateOfBirth) {
+            this.patientDateOfBirth = patientDateOfBirth;
+            return this;
+        }
+        public PrescriptionBuilder doctorEmail(String doctorEmail) {
+            this.doctorEmail = doctorEmail;
+            return this;
+        }
+        public PrescriptionBuilder doctorPhone(String doctorPhone) {
+            this.doctorPhone = doctorPhone;
+            return this;
+        }
+        public PrescriptionBuilder hospitalPhone(String hospitalPhone) {
+            this.hospitalPhone = hospitalPhone;
+            return this;
+        }
+        public PrescriptionBuilder hospitalEmail(String hospitalEmail) {
+            this.hospitalEmail = hospitalEmail;
+            return this;
+        }
+        public PrescriptionBuilder hospitalWebsite(String hospitalWebsite) {
+            this.hospitalWebsite = hospitalWebsite;
+            return this;
+        }
+        public PrescriptionBuilder hospitalAddress(String hospitalAddress) {
+            this.hospitalAddress = hospitalAddress;
+            return this;
+        }
+        public PrescriptionBuilder followUpWeeks(int followUpWeeks) {
+            this.followUpWeeks = followUpWeeks;
+            return this;
+        }
+        public PrescriptionBuilder idempotencyKey(String idempotencyKey) {
+            this.idempotencyKey = idempotencyKey;
+            return this;
+        }
+        public PrescriptionBuilder doctorNote(String doctorNote) {
+            this.doctorNote = doctorNote;
+            return this;
+        }
 
         public Prescription build() {
             if (doctorNote == null || doctorNote.isBlank()) {

@@ -42,22 +42,54 @@ public class Drug {
         return new DrugBuilder();
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public String getDrugId() { return drugId; }
-    public void setDrugId(String drugId) { this.drugId = drugId; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getDosage() { return dosage; }
-    public void setDosage(String dosage) { this.dosage = dosage; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public String getUsage() { return usage; }
-    public void setUsage(String usage) { this.usage = usage; }
-    public DrugType getType() { return type; }
-    public void setType(DrugType type) { this.type = type; }
-    public List<Prescription> getPrescriptions() { return prescriptions; }
-    public void setPrescriptions(List<Prescription> prescriptions) { this.prescriptions = prescriptions; }
+    public UUID getId() {
+        return id;
+    }
+    public void setId(UUID id) {
+        this.id = id;
+    }
+    public String getDrugId() {
+        return drugId;
+    }
+    public void setDrugId(String drugId) {
+        this.drugId = drugId;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getDosage() {
+        return dosage;
+    }
+    public void setDosage(String dosage) {
+        this.dosage = dosage;
+    }
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    public String getUsage() {
+        return usage;
+    }
+    public void setUsage(String usage) {
+        this.usage = usage;
+    }
+    public DrugType getType() {
+        return type;
+    }
+    public void setType(DrugType type) {
+        this.type = type;
+    }
+    public List<Prescription> getPrescriptions() {
+        return prescriptions;
+    }
+    public void setPrescriptions(List<Prescription> prescriptions) {
+        this.prescriptions = prescriptions;
+    }
 
     public static class DrugBuilder {
         private UUID id;
@@ -71,14 +103,38 @@ public class Drug {
 
         DrugBuilder() {}
 
-        public DrugBuilder id(UUID id) { this.id = id; return this; }
-        public DrugBuilder drugId(String drugId) { this.drugId = drugId; return this; }
-        public DrugBuilder name(String name) { this.name = name; return this; }
-        public DrugBuilder dosage(String dosage) { this.dosage = dosage; return this; }
-        public DrugBuilder description(String description) { this.description = description; return this; }
-        public DrugBuilder usage(String usage) { this.usage = usage; return this; }
-        public DrugBuilder type(DrugType type) { this.type = type; return this; }
-        public DrugBuilder prescriptions(List<Prescription> prescriptions) { this.prescriptions = prescriptions; return this; }
+        public DrugBuilder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+        public DrugBuilder drugId(String drugId) {
+            this.drugId = drugId;
+            return this;
+        }
+        public DrugBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+        public DrugBuilder dosage(String dosage) {
+            this.dosage = dosage;
+            return this;
+        }
+        public DrugBuilder description(String description) {
+            this.description = description;
+            return this;
+        }
+        public DrugBuilder usage(String usage) {
+            this.usage = usage;
+            return this;
+        }
+        public DrugBuilder type(DrugType type) {
+            this.type = type;
+            return this;
+        }
+        public DrugBuilder prescriptions(List<Prescription> prescriptions) {
+            this.prescriptions = prescriptions;
+            return this;
+        }
 
         public Drug build() {
             return new Drug(id, drugId, name, dosage, description, usage, type, prescriptions);

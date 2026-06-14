@@ -5,7 +5,7 @@ import com.pms.clinicalservice.dto.HospitalContactUpdateDTO;
 import com.pms.clinicalservice.dto.PatientContactUpdateDTO;
 import com.pms.clinicalservice.dto.PrescriptionResponseDTO;
 import com.pms.clinicalservice.exception.PrescriptionNotFoundException;
-import com.pms.clinicalservice.factory.PrescriptionFactory;
+import com.pms.clinicalservice.service.factory.PrescriptionFactory;
 import com.pms.clinicalservice.model.Prescription;
 import com.pms.clinicalservice.repository.PrescriptionRepository;
 import jakarta.persistence.criteria.Predicate;

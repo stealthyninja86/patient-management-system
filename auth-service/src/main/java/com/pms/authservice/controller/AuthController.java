@@ -1,12 +1,15 @@
 package com.pms.authservice.controller;
 
-import com.pms.authservice.dto.DepartmentDTO;
-import com.pms.authservice.dto.HospitalDTO;
-import com.pms.authservice.dto.LoginRequestDTO;
-import com.pms.authservice.dto.LoginResponseDTO;
-import com.pms.authservice.dto.RegisterRequestDTO;
-import com.pms.authservice.dto.RegisterResponseDTO;
-import com.pms.authservice.exception.InvalidCredentialsException;
+import com.pms.authservice.dto.request.AdminRegisterRequestDTO;
+import com.pms.authservice.dto.request.DoctorRegisterRequestDTO;
+import com.pms.authservice.dto.request.PatientRegisterRequestDTO;
+import com.pms.authservice.dto.response.AdminRegisterResponseDTO;
+import com.pms.authservice.dto.response.DepartmentDTO;
+import com.pms.authservice.dto.response.DoctorRegisterResponseDTO;
+import com.pms.authservice.dto.response.HospitalDTO;
+import com.pms.authservice.dto.request.LoginRequestDTO;
+import com.pms.authservice.dto.response.LoginResponseDTO;
+import com.pms.authservice.dto.response.PatientRegisterResponseDTO;
 import com.pms.authservice.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -31,15 +34,15 @@ public class AuthController {
     @Operation(summary = "Generate token on user login")
     @PostMapping("/login")
     ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
-        logger.info("Login attempt for email: {}", loginRequestDTO.getEmail());
+        logger.info("Login attempt for email: {}", loginRequestDTO.email());
         LoginResponseDTO response = authService.authenticate(loginRequestDTO);
-        logger.info("Login successful for email: {}", loginRequestDTO.getEmail());
+        logger.info("Login successful for email: {}", loginRequestDTO.email());
         return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Validate token")
     @GetMapping("/validate")
-    public ResponseEntity<Void> validateToken(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<Void> validateToken(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         logger.info("Validate token request");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -64,11 +67,24 @@ public class AuthController {
         return ResponseEntity.ok(authService.getAllDepartments(hospitalId));
     }
 
-    @Operation(summary = "Register a new user")
-    @PostMapping("/register")
-    public ResponseEntity<RegisterResponseDTO> register(@RequestBody RegisterRequestDTO request) {
-        logger.info("Registration request for email: {} and role: {}", request.email(), request.role());
-        RegisterResponseDTO response = authService.register(request);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Register a new admin")
+    @PostMapping("/register/admin")
+    public ResponseEntity<AdminRegisterResponseDTO> registerAdmin(@Valid @RequestBody AdminRegisterRequestDTO request) {
+        logger.info("Admin registration request for email: {}", request.email());
+        return ResponseEntity.ok(authService.registerAdmin(request));
+    }
+
+    @Operation(summary = "Register a new doctor")
+    @PostMapping("/register/doctor")
+    public ResponseEntity<DoctorRegisterResponseDTO> registerDoctor(@Valid @RequestBody DoctorRegisterRequestDTO request) {
+        logger.info("Doctor registration request for email: {}", request.email());
+        return ResponseEntity.ok(authService.registerDoctor(request));
+    }
+
+    @Operation(summary = "Register a new patient")
+    @PostMapping("/register/patient")
+    public ResponseEntity<PatientRegisterResponseDTO> registerPatient(@Valid @RequestBody PatientRegisterRequestDTO request) {
+        logger.info("Patient registration request for email: {}", request.email());
+        return ResponseEntity.ok(authService.registerPatient(request));
     }
 }

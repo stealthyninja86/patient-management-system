@@ -1,8 +1,8 @@
 package com.pms.hospitalservice.controller;
 
-import com.pms.hospitalservice.dto.DoctorRequestDTO;
-import com.pms.hospitalservice.dto.DoctorResponseDTO;
-import com.pms.hospitalservice.facade.DoctorFacade;
+import com.pms.hospitalservice.dto.request.DoctorRequestDTO;
+import com.pms.hospitalservice.dto.response.DoctorResponseDTO;
+import com.pms.hospitalservice.service.facade.DoctorFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

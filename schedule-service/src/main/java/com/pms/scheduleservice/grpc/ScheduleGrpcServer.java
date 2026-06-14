@@ -5,6 +5,7 @@ import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;
 import com.pms.scheduleservice.repository.AppointmentRepository;
 import com.pms.scheduleservice.repository.TimeSlotRepository;
+import java.util.List;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -61,8 +62,9 @@ public class ScheduleGrpcServer extends ScheduleServiceGrpc.ScheduleServiceImplB
                 .setHasOngoing(false);
 
         Optional<Appointment> appointmentOpt = appointmentRepository
-                .findFirstByDoctorIdAndPatientIdAndStatus(
-                        request.getDoctorId(), request.getPatientId(), AppointmentStatus.ONGOING);
+                .findFirstByDoctorIdAndPatientIdAndStatusIn(
+                        request.getDoctorId(), request.getPatientId(),
+                        List.of(AppointmentStatus.BOOKED, AppointmentStatus.ONGOING));
 
         if (appointmentOpt.isPresent()) {
             builder.setHasOngoing(true);

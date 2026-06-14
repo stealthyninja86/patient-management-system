@@ -7,14 +7,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import patient.PatientDeleteRequest;
+import patient.PatientDeleteResponse;
 import patient.PatientServiceGrpc;
+import patient.PatientServiceGrpc.PatientServiceBlockingStub;
 import patient.PatientResponse;
 
 @Component
 public class PatientGrpcClient {
 
     private static final Logger log = LoggerFactory.getLogger(PatientGrpcClient.class);
-    private final PatientServiceGrpc.PatientServiceBlockingStub blockingStub;
+    private final PatientServiceBlockingStub blockingStub;
     private final ManagedChannel channel;
 
     public PatientGrpcClient(
@@ -40,6 +43,14 @@ public class PatientGrpcClient {
                 .setBloodType(bloodType != null ? bloodType : "")
                 .build();
         return blockingStub.createPatient(request);
+    }
+
+    public PatientDeleteResponse deletePatient(String patientId) {
+        PatientDeleteRequest request = PatientDeleteRequest.newBuilder().
+                setPatientId(patientId)
+                .build();
+        log.debug("Deleting patient via gRPC: request={}", request);
+        return blockingStub.deletePatient(request);
     }
 
     @PreDestroy

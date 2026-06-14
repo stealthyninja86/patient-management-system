@@ -1,11 +1,10 @@
 package com.pms.notificationservice.kafka;
 
-import com.pms.notificationservice.dto.AppointmentEventDTO;
-import com.pms.notificationservice.dto.NotificationRequest;
-import com.pms.notificationservice.model.NotificationChannel;
+import com.pms.notificationservice.dto.event.AppointmentEventDTO;
 import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.service.NotificationService;
-import com.pms.notificationservice.strategy.ChannelRouter;
+import com.pms.notificationservice.service.strategy.ChannelRouter;
+import com.pms.notificationservice.service.template.AppointmentConfirmationTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,15 +17,23 @@ public class AppointmentEventConsumer {
 
     private final NotificationService notificationService;
     private final ChannelRouter channelRouter;
+    private final AppointmentConfirmationTemplate appointmentTemplate;
 
     public AppointmentEventConsumer(NotificationService notificationService,
-                                    ChannelRouter channelRouter) {
+                                    ChannelRouter channelRouter,
+                                    AppointmentConfirmationTemplate appointmentTemplate) {
         this.notificationService = notificationService;
         this.channelRouter = channelRouter;
+        this.appointmentTemplate = appointmentTemplate;
     }
 
-    @KafkaListener(topics = "appointment-events")
+    @KafkaListener(topics = "appointment-events", containerFactory = "appointmentKafkaListenerContainerFactory")
     public void consume(AppointmentEventDTO event) {
+        if (event == null) {
+            log.warn("Received null appointment event, skipping");
+            return;
+        }
+
         log.info("Received appointment event: appointmentId={}, status={}",
             event.appointmentId(), event.status());
 
@@ -35,40 +42,18 @@ public class AppointmentEventConsumer {
                 return;
             }
 
-            String eventId = "appt-" + event.appointmentId();
-            NotificationType type = NotificationType.APPOINTMENT_CONFIRMATION;
+            var requests = appointmentTemplate.createRequests(event,
+                    channelRouter.resolve(NotificationType.APPOINTMENT_CONFIRMATION));
 
-            for (NotificationChannel channel : channelRouter.resolve(type)) {
-                String message = buildMessage(channel, event);
-                String dedupKey = eventId + ":" + channel.name().toLowerCase();
-
-                String recipient = channel == NotificationChannel.SMS
-                    ? event.patientPhone() : event.patientEmail();
-
-                notificationService.sendNotification(new NotificationRequest(
-                    dedupKey, event.patientId(), type, channel,
-                    recipient, message
-                ));
+            for (var request : requests) {
+                notificationService.sendNotification(request);
             }
 
             log.info("Appointment confirmation sent: appointmentId={}", event.appointmentId());
 
         } catch (Exception e) {
             log.error("Failed to process appointment event: appointmentId={}, error={}",
-                event.appointmentId(), e.getMessage());
+                event != null ? event.appointmentId() : "null", e.getMessage());
         }
-    }
-
-    private String buildMessage(NotificationChannel channel, AppointmentEventDTO event) {
-        if (channel == NotificationChannel.SMS) {
-            return String.format(
-                "Appointment confirmed with Dr. %s on %s.",
-                event.doctorName(), event.appointmentDate());
-        }
-        return String.format(
-            "Dear %s,\n\nYour appointment with Dr. %s at %s has been confirmed.\n" +
-            "Date & Time: %s\n\nThank you,\nPatient Management System",
-            event.patientName(), event.doctorName(),
-            event.hospitalName(), event.appointmentDate());
     }
 }

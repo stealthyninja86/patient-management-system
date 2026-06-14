@@ -1,22 +1,21 @@
 package com.pms.notificationservice.service;
 
-import com.pms.notificationservice.adapter.OtpNotificationTemplate;
-import com.pms.notificationservice.dto.NotificationRequest;
+import com.pms.notificationservice.service.adapter.OtpNotificationTemplate;
+import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.model.Otp;
 import com.pms.notificationservice.model.OtpStatus;
 import com.pms.notificationservice.repository.OtpRepository;
-import com.pms.notificationservice.strategy.ChannelRouter;
+import com.pms.notificationservice.service.factory.OtpFactory;
+import com.pms.notificationservice.service.strategy.ChannelRouter;
+import io.micrometer.core.instrument.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
@@ -37,17 +36,29 @@ public class OtpService {
     private final OtpNotificationTemplate otpNotificationTemplate;
     private final ChannelRouter channelRouter;
     private final SecureRandom secureRandom;
+    private final Counter otpGeneratedCounter;
+    private final Counter otpVerifiedCounter;
+    private final Counter otpFailedCounter;
+    private final OtpFactory otpFactory;
 
     public OtpService(OtpRepository otpRepository,
                       StringRedisTemplate redisTemplate,
                       OtpNotificationTemplate otpNotificationTemplate,
                       ChannelRouter channelRouter,
-                      SecureRandom secureRandom) {
+                      SecureRandom secureRandom,
+                      Counter otpGeneratedCounter,
+                      Counter otpVerifiedCounter,
+                      Counter otpFailedCounter,
+                      OtpFactory otpFactory) {
         this.otpRepository = otpRepository;
         this.redisTemplate = redisTemplate;
         this.otpNotificationTemplate = otpNotificationTemplate;
         this.channelRouter = channelRouter;
         this.secureRandom = secureRandom;
+        this.otpGeneratedCounter = otpGeneratedCounter;
+        this.otpVerifiedCounter = otpVerifiedCounter;
+        this.otpFailedCounter = otpFailedCounter;
+        this.otpFactory = otpFactory;
     }
 
     /**
@@ -69,20 +80,12 @@ public class OtpService {
     public UUID generateOtp(String patientId, String doctorId,
                             String hospitalId, String consentRequestId,
                             String phoneNumber){
-        String code =  String.format("%06d", secureRandom.nextInt(10000));
-        String phoneHash = hashPhone(phoneNumber);
-        Otp otp = Otp.builder()
-                .patientId(patientId)
-                .doctorId(doctorId)
-                .hospitalId(hospitalId)
-                .consentRequestId(consentRequestId)
-                .phoneHash(phoneHash)
-                .status(OtpStatus.GENERATED)
-                .attempts(0)
-                .expiresAt(Instant.now().plusSeconds(OTP_TTL_SECONDS))
-                .createdAt(Instant.now())
-                .build();
+        Otp otp = otpFactory.createOtp(
+                patientId, doctorId, hospitalId, consentRequestId,
+                phoneNumber, Instant.now().plusSeconds(OTP_TTL_SECONDS));
+        String code =  String.format("%06d", secureRandom.nextInt(1_000_000));
         otpRepository.save(otp);
+        otpGeneratedCounter.increment();
 
         String redisKey = REDIS_KEY_PREFIX + otp.getId().toString();
         redisTemplate.opsForValue().set(redisKey, code, OTP_TTL_SECONDS, TimeUnit.SECONDS);
@@ -104,7 +107,7 @@ public class OtpService {
             otpNotificationTemplate.send(request);
         }
 
-        log.info("OTP generated: otpId={}, patientId={}, doctorId={}",  otp.getId().toString(), patientId, doctorId);
+        log.info("OTP generated: otpId={}, patientId={}, doctorId={}, code={}",  otp.getId().toString(), patientId, doctorId, code);
         return otp.getId();
     }
 
@@ -136,6 +139,7 @@ public class OtpService {
             return handleMismatch(otpId);
         }
 
+        otpVerifiedCounter.increment();
         return updateStatus(otpId, OtpStatus.VERIFIED);
     }
 
@@ -180,6 +184,9 @@ public class OtpService {
         if (newStatus == OtpStatus.VERIFIED) {
             otp.setVerifiedAt(Instant.now());
         }
+        else if (newStatus == OtpStatus.EXPIRED || newStatus == OtpStatus.LOCKED) {
+            otpFailedCounter.increment();
+        }
 
         //Remove from Redis cache if terminal
         String redisKey = REDIS_KEY_PREFIX + otpId.toString();
@@ -188,20 +195,6 @@ public class OtpService {
         log.info("OTP status updated: otpId={}, newStatus={}", otpId, newStatus);
         return newStatus;
     }
-
-    private String hashPhone(String phone){
-        try{
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(phone.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder();
-            for(byte b : hash){
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     /**
      * Expire OTPs whose TTL has passed but DB records remain in GENERATED state.

@@ -1,9 +1,9 @@
 package com.pms.notificationservice.controller;
 
-import com.pms.notificationservice.dto.NotificationRequest;
-import com.pms.notificationservice.dto.SendNotificationResponseDTO;
-import com.pms.notificationservice.facade.NotificationFacade;
-import com.pms.notificationservice.model.Notification;
+import com.pms.notificationservice.dto.request.NotificationRequest;
+import com.pms.notificationservice.dto.response.NotificationResponseDTO;
+import com.pms.notificationservice.dto.response.SendNotificationResponseDTO;
+import com.pms.notificationservice.service.facade.NotificationFacade;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,10 +29,10 @@ public class NotificationController {
     }
 
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<Notification>> getPatientNotificationHistory(
+    public ResponseEntity<List<NotificationResponseDTO>> getPatientNotificationHistory(
             @PathVariable String patientId
     ){
-        List<Notification> notifications = notificationFacade.getPatientNotificationHistory(patientId);
+        List<NotificationResponseDTO> notifications = notificationFacade.getPatientNotificationHistory(patientId);
         return ResponseEntity.ok().body(notifications);
     }
 }

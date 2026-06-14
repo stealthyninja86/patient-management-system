@@ -13,9 +13,18 @@ public record DoctorDTO(String doctorId, String name, String departmentId) {
 
         DoctorDTOBuilder() {}
 
-        public DoctorDTOBuilder doctorId(String doctorId) { this.doctorId = doctorId; return this; }
-        public DoctorDTOBuilder name(String name) { this.name = name; return this; }
-        public DoctorDTOBuilder departmentId(String departmentId) { this.departmentId = departmentId; return this; }
+        public DoctorDTOBuilder doctorId(String doctorId) {
+            this.doctorId = doctorId;
+            return this;
+        }
+        public DoctorDTOBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+        public DoctorDTOBuilder departmentId(String departmentId) {
+            this.departmentId = departmentId;
+            return this;
+        }
 
         public DoctorDTO build() {
             return new DoctorDTO(doctorId, name, departmentId);

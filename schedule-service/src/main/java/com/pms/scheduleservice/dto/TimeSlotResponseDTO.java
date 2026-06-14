@@ -7,5 +7,6 @@ public record TimeSlotResponseDTO(
     String doctorId,
     String doctorName,
     LocalDateTime startTime,
-    LocalDateTime endTime
+    LocalDateTime endTime,
+    String status
 ) {}

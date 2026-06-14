@@ -1,11 +1,13 @@
 package com.pms.notificationservice.service;
 
-import com.pms.notificationservice.adapter.NotificationProvider;
-import com.pms.notificationservice.dto.NotificationRequest;
+import com.pms.notificationservice.service.adapter.NotificationProvider;
+import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.model.Notification;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationStatus;
 import com.pms.notificationservice.repository.NotificationRepository;
+import com.pms.notificationservice.service.factory.NotificationFactory;
+import io.micrometer.core.instrument.Counter;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,11 +39,28 @@ public class NotificationService {
     private final StringRedisTemplate redisTemplate;
     private final List<NotificationProvider> providers;
     private final Map<NotificationChannel, NotificationProvider> providerMap = new EnumMap<>(NotificationChannel.class);
+    private final Counter notificationSentCounter;
+    private final Counter notificationFailedCounter;
+    private final Counter dedupHitCounter;
+    private final Counter dedupMissCounter;
+    private final NotificationFactory notificationFactory;
 
-    public NotificationService(NotificationRepository notificationRepository, StringRedisTemplate redisTemplate, List<NotificationProvider> providers) {
+    public NotificationService(NotificationRepository notificationRepository,
+                               StringRedisTemplate redisTemplate,
+                               List<NotificationProvider> providers,
+                               Counter notificationSentCounter,
+                               Counter notificationFailedCounter,
+                               Counter dedupHitCounter,
+                               Counter dedupMissCounter,
+                               NotificationFactory notificationFactory) {
         this.notificationRepository = notificationRepository;
         this.redisTemplate = redisTemplate;
         this.providers = providers;
+        this.notificationSentCounter = notificationSentCounter;
+        this.notificationFailedCounter = notificationFailedCounter;
+        this.dedupHitCounter = dedupHitCounter;
+        this.dedupMissCounter = dedupMissCounter;
+        this.notificationFactory = notificationFactory;
     }
 
     @PostConstruct
@@ -64,6 +83,9 @@ public class NotificationService {
     )
    @Transactional
    public boolean sendNotification(NotificationRequest notificationRequest){
+        if (notificationRequest.recipient() == null || notificationRequest.recipient().isBlank()) {
+            throw new IllegalArgumentException("Recipient cannot be empty");
+        }
         String dedupKey = DEDUP_KEY_PREFIX + notificationRequest.eventId() + ":" + notificationRequest.channel().name();
 
         //check if already sent
@@ -72,19 +94,14 @@ public class NotificationService {
 
         if(Boolean.FALSE.equals(wasSet)){
             log.info("Duplicate notification suppressed: eventId={}, channel={}", notificationRequest.eventId(), notificationRequest.channel());
+            dedupHitCounter.increment();
             return false;
         }
 
+        dedupMissCounter.increment();
+
         //create notification record
-        Notification notification = Notification.builder()
-                .patientId(notificationRequest.patientId())
-                .type(notificationRequest.type())
-                .channel(notificationRequest.channel())
-                .recipient(notificationRequest.recipient())
-                .message(notificationRequest.message())
-                .status(NotificationStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Notification notification = notificationFactory.createNotification(notificationRequest);
 
         try{
             // look up provider by channel and send
@@ -95,7 +112,7 @@ public class NotificationService {
                 );
             }
             provider.send(notificationRequest);
-
+            notificationSentCounter.increment();
             //mark as sent
             log.info("Notification sent for patientId: {}, with message: {}", notificationRequest.patientId(), notificationRequest.message());
             notification.setStatus(NotificationStatus.SENT);
@@ -120,8 +137,10 @@ public class NotificationService {
      * but we keep the dedup key so it's not retried via Kafka reprocessing.
      */
     @Recover
-    public void recover(Exception e, NotificationRequest notificationRequest){
+    public boolean recover(Exception e, NotificationRequest notificationRequest){
+        notificationFailedCounter.increment();
         log.error("All notification retries exhausted: eventId={}, channel={}, error={}", notificationRequest.eventId(), notificationRequest.channel(), e.getMessage());
+        return false;
     }
 
     public List<Notification> getPatientNotificationHistory(String patientId){

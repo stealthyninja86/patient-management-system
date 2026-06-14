@@ -1,8 +1,8 @@
 package com.pms.patient_service.grpc;
 
-import com.pms.patient_service.dto.PatientGrpcRequestDTO;
-import com.pms.patient_service.dto.PatientResponseDTO;
-import com.pms.patient_service.facade.PatientFacade;
+import com.pms.patient_service.dto.request.PatientGrpcRequestDTO;
+import com.pms.patient_service.dto.response.PatientResponseDTO;
+import com.pms.patient_service.service.facade.PatientFacade;
 import patient.CreatePatientRequest;
 import patient.PatientByIdRequest;
 import patient.PatientResponse;

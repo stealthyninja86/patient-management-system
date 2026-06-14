@@ -1,16 +1,16 @@
 package com.pms.hospitalservice.service;
 
-import com.pms.hospitalservice.dto.DoctorRequestDTO;
-import com.pms.hospitalservice.dto.DoctorResponseDTO;
+import com.pms.hospitalservice.dto.request.DoctorRequestDTO;
+import com.pms.hospitalservice.dto.response.DoctorResponseDTO;
 import com.pms.hospitalservice.exception.DepartmentNotFoundException;
 import com.pms.hospitalservice.exception.DoctorNotFoundException;
-import com.pms.hospitalservice.factory.DoctorFactory;
+import com.pms.hospitalservice.service.factory.DoctorFactory;
 import com.pms.hospitalservice.model.Department;
 import com.pms.hospitalservice.model.Doctor;
 import com.pms.hospitalservice.repository.DepartmentRepository;
 import com.pms.hospitalservice.repository.DoctorRepository;
 import com.pms.hospitalservice.repository.HospitalRepository;
-import com.pms.hospitalservice.util.IdGenerator;
+import com.pms.hospitalservice.service.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

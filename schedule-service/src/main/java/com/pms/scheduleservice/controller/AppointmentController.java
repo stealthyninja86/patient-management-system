@@ -4,7 +4,7 @@ import com.pms.scheduleservice.dto.AppointmentRequestDTO;
 import com.pms.scheduleservice.dto.AppointmentResponseDTO;
 import com.pms.scheduleservice.dto.DoctorPatientDTO;
 import com.pms.scheduleservice.dto.RescheduleRequestDTO;
-import com.pms.scheduleservice.facade.AppointmentFacade;
+import com.pms.scheduleservice.service.facade.AppointmentFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;

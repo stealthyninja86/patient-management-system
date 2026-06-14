@@ -1,8 +1,8 @@
 package com.pms.patient_service.controller;
 
-import com.pms.patient_service.dto.PatientRequestDTO;
-import com.pms.patient_service.dto.PatientResponseDTO;
-import com.pms.patient_service.facade.PatientFacade;
+import com.pms.patient_service.dto.request.PatientRequestDTO;
+import com.pms.patient_service.dto.response.PatientResponseDTO;
+import com.pms.patient_service.service.facade.PatientFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;

@@ -14,10 +14,22 @@ public record PatientDTO(String patientId, String name, String email, String pho
 
         PatientDTOBuilder() {}
 
-        public PatientDTOBuilder patientId(String patientId) { this.patientId = patientId; return this; }
-        public PatientDTOBuilder name(String name) { this.name = name; return this; }
-        public PatientDTOBuilder email(String email) { this.email = email; return this; }
-        public PatientDTOBuilder phone(String phone) { this.phone = phone; return this; }
+        public PatientDTOBuilder patientId(String patientId) {
+            this.patientId = patientId;
+            return this;
+        }
+        public PatientDTOBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
+        public PatientDTOBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+        public PatientDTOBuilder phone(String phone) {
+            this.phone = phone;
+            return this;
+        }
 
         public PatientDTO build() {
             return new PatientDTO(patientId, name, email, phone);

@@ -9,13 +9,13 @@ import com.pms.scheduleservice.exception.AppointmentNotFoundException;
 import com.pms.scheduleservice.exception.InvalidAppointmentOperationException;
 import com.pms.scheduleservice.exception.TimeSlotNotAvailableException;
 import com.pms.scheduleservice.exception.TimeSlotNotFoundException;
-import com.pms.scheduleservice.factory.AppointmentFactory;
+import com.pms.scheduleservice.service.factory.AppointmentFactory;
 import com.pms.scheduleservice.model.Appointment;
 import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;
 import com.pms.scheduleservice.repository.AppointmentRepository;
 import com.pms.scheduleservice.repository.TimeSlotRepository;
-import com.pms.scheduleservice.util.IdGenerator;
+import com.pms.scheduleservice.service.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -111,7 +111,8 @@ public class AppointmentService {
         appointment.setPatientEmail(patientResponse.getEmail());
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentBookedEvent(appointment);
+        kafkaProducer.sendAppointmentBookedEvent(appointment, patientResponse,
+            timeSlot.getStartTime().toLocalDate().toString());
 
         return appointmentFactory.toResponseDTO(appointment);
     }
@@ -139,7 +140,7 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentStatusChangedEvent(appointment);
+        kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
 
         return appointmentFactory.toResponseDTO(appointment);
     }
@@ -164,7 +165,7 @@ public class AppointmentService {
         appointment.setTimeSlotId(newTimeSlotId);
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentStatusChangedEvent(appointment);
+        kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
 
         return appointmentFactory.toResponseDTO(appointment);
     }
@@ -204,7 +205,7 @@ public class AppointmentService {
         }
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentStatusChangedEvent(appointment);
+        kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
 
         return appointmentFactory.toResponseDTO(appointment);
     }

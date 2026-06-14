@@ -1,13 +1,14 @@
 package com.pms.hospitalservice.grpc;
 
-import com.pms.hospitalservice.factory.DoctorFactory;
+import com.pms.hospitalservice.dto.request.DoctorRequestDTO;
+import com.pms.hospitalservice.service.factory.DoctorFactory;
 import com.pms.hospitalservice.model.Department;
 import com.pms.hospitalservice.model.Doctor;
 import com.pms.hospitalservice.model.Hospital;
 import com.pms.hospitalservice.repository.DepartmentRepository;
 import com.pms.hospitalservice.repository.DoctorRepository;
 import com.pms.hospitalservice.repository.HospitalRepository;
-import com.pms.hospitalservice.util.IdGenerator;
+import com.pms.hospitalservice.service.util.IdGenerator;
 import hospital.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @GrpcService
 public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImplBase {
@@ -120,7 +120,7 @@ public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImpl
         log.info("gRPC createDoctor: {}", request.getName());
         try {
             Doctor doctor = DoctorFactory.createEntity(
-                    new com.pms.hospitalservice.dto.DoctorRequestDTO(
+                    new DoctorRequestDTO(
                             request.getName(), "", "", request.getDepartmentId(), request.getEmail(), request.getPhone()
                     )
             );

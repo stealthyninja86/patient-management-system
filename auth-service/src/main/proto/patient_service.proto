@@ -6,6 +6,7 @@ option java_package = "patient";
 service PatientService {
   rpc GetPatientById(PatientByIdRequest) returns (PatientResponse);
   rpc CreatePatient(CreatePatientRequest) returns (PatientResponse);
+  rpc DeletePatient(PatientDeleteRequest) returns (PatientDeleteResponse);
 }
 
 message PatientByIdRequest {
@@ -33,4 +34,13 @@ message PatientResponse {
   string name = 9;
   string phone = 10;
   string gender = 11;
+}
+
+message PatientDeleteRequest{
+  string patientId = 1;
+}
+
+message PatientDeleteResponse{
+  bool success = 1;
+  string message = 2;
 }

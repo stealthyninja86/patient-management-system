@@ -34,7 +34,7 @@ public class PrescriptionPdfGeneratedEvent {
     @JsonProperty("version")
     private String version;
 
-    @JsonProperty
+    @JsonProperty("patientEmail")
     private String patientEmail;
 
     public PrescriptionPdfGeneratedEvent() {}

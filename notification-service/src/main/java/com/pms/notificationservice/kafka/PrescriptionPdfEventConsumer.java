@@ -1,11 +1,11 @@
 package com.pms.notificationservice.kafka;
 
-import com.pms.notificationservice.dto.NotificationRequest;
-import com.pms.notificationservice.dto.PrescriptionPdfGeneratedEventDTO;
-import com.pms.notificationservice.model.NotificationChannel;
+import com.pms.notificationservice.dto.request.NotificationRequest;
+import com.pms.notificationservice.dto.event.PrescriptionPdfGeneratedEventDTO;
 import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.service.NotificationService;
-import com.pms.notificationservice.strategy.ChannelRouter;
+import com.pms.notificationservice.service.strategy.ChannelRouter;
+import com.pms.notificationservice.service.template.PrescriptionReadyTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,14 +18,23 @@ public class PrescriptionPdfEventConsumer {
 
     private final NotificationService notificationService;
     private final ChannelRouter channelRouter;
+    private final PrescriptionReadyTemplate prescriptionTemplate;
 
-    public PrescriptionPdfEventConsumer(NotificationService notificationService, ChannelRouter channelRouter) {
+    public PrescriptionPdfEventConsumer(NotificationService notificationService,
+                                         ChannelRouter channelRouter,
+                                         PrescriptionReadyTemplate prescriptionTemplate) {
         this.notificationService = notificationService;
         this.channelRouter = channelRouter;
+        this.prescriptionTemplate = prescriptionTemplate;
     }
 
-    @KafkaListener(topics = "prescription-pdf-events")
+    @KafkaListener(topics = "prescription-pdf-events", containerFactory = "prescriptionKafkaListenerContainerFactory")
     public void consume(PrescriptionPdfGeneratedEventDTO event){
+        if (event == null) {
+            log.warn("Received null prescription event, skipping");
+            return;
+        }
+
         log.info("Received Prescription PDF event: prescriptionId = {} , status = {}", event.prescriptionId(), event.status());
 
         try{
@@ -34,23 +43,15 @@ public class PrescriptionPdfEventConsumer {
             }
 
             if(event.patientEmail() == null || event.patientEmail().isBlank()){
-                log.warn("Skopping prescription notification - no patient email : prescriptionId = {} ", event.prescriptionId());
+                log.warn("Skipping prescription notification - no patient email : prescriptionId = {} ", event.prescriptionId());
                 return;
             }
 
-            String eventId = "rx-" + event.prescriptionId();
-            NotificationType type = NotificationType.PRESCRIPTION_READY;
-            String message = String.format(
-                    "Your prescription (Id: %s) is ready. Please login to view and download",
-                    event.prescriptionId()
-            );
+            var requests = prescriptionTemplate.createRequests(event,
+                    channelRouter.resolve(NotificationType.PRESCRIPTION_READY));
 
-            for(NotificationChannel channel: channelRouter.resolve(type)){
-                notificationService.sendNotification(new NotificationRequest(
-                        eventId + ":" + channel.name().toLowerCase(),
-                        event.patientId(), type, channel,
-                        event.patientEmail(), message
-                ));
+            for(NotificationRequest request : requests){
+                notificationService.sendNotification(request);
             }
 
             log.info("prescription ready notification sent: prescriptionId = {} ", event.prescriptionId());

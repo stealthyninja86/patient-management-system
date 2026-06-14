@@ -5,7 +5,7 @@ import com.pms.clinicalservice.dto.HospitalContactUpdateDTO;
 import com.pms.clinicalservice.dto.PatientContactUpdateDTO;
 import com.pms.clinicalservice.dto.PrescriptionRequestDTO;
 import com.pms.clinicalservice.dto.PrescriptionResponseDTO;
-import com.pms.clinicalservice.facade.PrescriptionFacade;
+import com.pms.clinicalservice.service.facade.PrescriptionFacade;
 import com.pms.clinicalservice.service.PrescriptionService;
 import com.pms.clinicalservice.util.JwtUtil;
 import org.slf4j.Logger;

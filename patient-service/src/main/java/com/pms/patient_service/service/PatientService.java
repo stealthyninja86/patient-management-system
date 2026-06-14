@@ -1,12 +1,10 @@
 package com.pms.patient_service.service;
 
-import com.pms.patient_service.dto.PatientRequestDTO;
-import com.pms.patient_service.dto.PatientResponseDTO;
+import com.pms.patient_service.dto.request.PatientRequestDTO;
 import com.pms.patient_service.exception.PatientNotFoundException;
-import com.pms.patient_service.factory.PatientFactory;
+import com.pms.patient_service.service.factory.PatientFactory;
 import com.pms.patient_service.model.Patient;
 import com.pms.patient_service.repository.PatientRepository;
-import com.pms.patient_service.util.IdGenerator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,30 +16,27 @@ import java.util.List;
 public class PatientService {
     private static final Logger log = LoggerFactory.getLogger(PatientService.class);
     private final PatientRepository patientRepository;
-    private final IdGenerator idGenerator;
+    private final PatientFactory patientFactory;
 
-    public PatientService(PatientRepository patientRepository, IdGenerator idGenerator) {
+    public PatientService(PatientRepository patientRepository, PatientFactory patientFactory) {
         this.patientRepository = patientRepository;
-        this.idGenerator = idGenerator;
+        this.patientFactory = patientFactory;
     }
 
-    public List<PatientResponseDTO> getAllPatients() {
+    public List<Patient> getAllPatients() {
         log.debug("Fetching all patients");
-        return patientRepository.findAll().stream()
-                .map(PatientFactory::toPatientResponseDTO)
-                .toList();
+        return patientRepository.findAll();
     }
 
     public Patient createPatient(PatientRequestDTO dto) {
         log.debug("Creating new patient with email: {}", dto.getEmail());
-        Patient patient = PatientFactory.createPatientEntity(dto);
-        patient.setPatientId(idGenerator.nextId("PMS-", "patient_id_seq"));
+        Patient patient = patientFactory.createPatient(dto);
         return patientRepository.save(patient);
     }
 
     public Patient updatePatient(Patient existing, PatientRequestDTO dto) {
         log.debug("Updating patient with patientId: {}", existing.getPatientId());
-        PatientFactory.updatePatientEntity(existing, dto);
+        patientFactory.updatePatient(existing, dto);
         return patientRepository.save(existing);
     }
 
@@ -50,15 +45,9 @@ public class PatientService {
         patientRepository.delete(patient);
     }
 
-    public PatientResponseDTO getPatientByPatientId(String patientId) {
+    public Patient getPatientByPatientId(String patientId) {
         log.debug("Fetching patient by patientId: {}", patientId);
-        Patient patient = patientRepository.findByPatientId(patientId)
+        return patientRepository.findByPatientId(patientId)
                 .orElseThrow(() -> new PatientNotFoundException("Patient not found: " + patientId));
-        return PatientFactory.toPatientResponseDTO(patient);
-    }
-
-    public PatientResponseDTO toResponseDTO(Patient patient) {
-        log.debug("Converting Patient entity to response DTO for patientId: {}", patient.getPatientId());
-        return PatientFactory.toPatientResponseDTO(patient);
     }
 }
