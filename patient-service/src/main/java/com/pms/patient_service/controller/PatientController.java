@@ -1,15 +1,14 @@
 package com.pms.patient_service.controller;
 
-import com.pms.patient_service.dto.PatientRequestDTO;
-import com.pms.patient_service.dto.PatientResponseDTO;
-import com.pms.patient_service.service.PatientService;
-import com.pms.patient_service.validators.CreatePatientValidationGroup;
+import com.pms.patient_service.dto.request.PatientRequestDTO;
+import com.pms.patient_service.dto.response.PatientResponseDTO;
+import com.pms.patient_service.service.facade.PatientFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import jakarta.validation.groups.Default;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,40 +16,50 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/patients")
-@Tag(name="Patient", description = "API for managing Patients")
+@Tag(name = "Patient", description = "API for managing Patients")
 public class PatientController {
-    private final PatientService patientService;
 
-    public PatientController(PatientService patientService) {
-        this.patientService = patientService;
+    private static final Logger log = LoggerFactory.getLogger(PatientController.class);
+
+    private final PatientFacade patientFacade;
+
+    public PatientController(PatientFacade patientFacade) {
+        this.patientFacade = patientFacade;
     }
 
     @GetMapping
     @Operation(summary = "Get Patients")
     public ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
-        List<PatientResponseDTO> patients = patientService.getPatients();
-        return ResponseEntity.ok().body(patients);
+        log.info("REST request to get all patients");
+        return ResponseEntity.ok(patientFacade.getAllPatients());
     }
 
     @PostMapping
-    @Operation(summary = "create Patients")
-    public ResponseEntity<PatientResponseDTO> createPatient(@Validated({Default.class, CreatePatientValidationGroup.class}) @RequestBody PatientRequestDTO patientRequestDTO) {
-       PatientResponseDTO patientResponseDTO = patientService.createPatient(patientRequestDTO);
-       return ResponseEntity.ok().body(patientResponseDTO);
+    @Operation(summary = "Create Patient")
+    public ResponseEntity<PatientResponseDTO> createPatient(@RequestBody PatientRequestDTO dto) {
+        log.info("REST request to create patient with email: {}", dto.getEmail());
+        return ResponseEntity.status(HttpStatus.CREATED).body(patientFacade.createPatient(dto));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update Patients")
-    public ResponseEntity<PatientResponseDTO> updatePatient(@PathVariable UUID id,
-                                                            @Validated({Default.class}) @RequestBody PatientRequestDTO patientRequestDTO) {
-        PatientResponseDTO patientResponseDTO = patientService.updatePatient(id, patientRequestDTO);
-        return ResponseEntity.ok().body(patientResponseDTO);
+    @Operation(summary = "Update Patient")
+    public ResponseEntity<PatientResponseDTO> updatePatient(@PathVariable UUID id, @RequestBody PatientRequestDTO dto) {
+        log.info("REST request to update patient with id: {}", id);
+        return ResponseEntity.ok(patientFacade.updatePatient(id, dto));
+    }
+
+    @GetMapping("/by-patient-id")
+    @Operation(summary = "Get Patient by patientId")
+    public ResponseEntity<PatientResponseDTO> getPatientByPatientId(@RequestParam String patientId) {
+        log.info("REST request to get patient by patientId: {}", patientId);
+        return ResponseEntity.ok(patientFacade.getPatientByPatientId(patientId));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete  Patients")
+    @Operation(summary = "Delete Patient")
     public ResponseEntity<Void> deletePatient(@PathVariable UUID id) {
-        patientService.deletePatient(id);
+        log.info("REST request to delete patient with id: {}", id);
+        patientFacade.deletePatient(id);
         return ResponseEntity.noContent().build();
     }
 }

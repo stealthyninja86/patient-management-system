@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "hospital";
+
+service HospitalService {
+  rpc GetDoctorById(DoctorByIdRequest) returns (DoctorResponse);
+  rpc GetDoctorByEmail(DoctorByEmailRequest) returns (DoctorResponse);
+  rpc GetDepartmentById(DepartmentByIdRequest) returns (DepartmentResponse);
+  rpc CreateDoctor(CreateDoctorRequest) returns (DoctorResponse);
+  rpc GetAllHospitals(Empty) returns (HospitalListResponse);
+  rpc GetAllDepartments(DepartmentByHospitalRequest) returns (DepartmentListResponse);
+  rpc DeleteDoctor(DeleteDoctorRequest) returns (DeleteDoctorResponse);
+}
+
+message DoctorByIdRequest {
+  string doctorId = 1;
+}
+
+message DoctorByEmailRequest {
+  string email = 1;
+}
+
+message DoctorResponse {
+  string doctorId = 1;
+  string name = 2;
+  string departmentId = 4;
+}
+
+message DepartmentByIdRequest {
+  string departmentId = 1;
+}
+
+message DepartmentResponse {
+  string departmentId = 1;
+  string name = 2;
+  string hospitalId = 3;
+  string hospitalName = 4;
+}
+
+message CreateDoctorRequest {
+  string name = 1;
+  string email = 3;
+  string phone = 4;
+  string departmentId = 5;
+  string hospitalId = 6;
+}
+
+message HospitalResponse{
+  string hospitalId = 1;
+  string name = 2;
+  string address = 3;
+}
+
+message Empty{}
+
+message HospitalListResponse {
+  repeated HospitalResponse hospitals = 1;
+}
+
+message DepartmentByHospitalRequest{
+  string hospitalId = 1;
+}
+
+message DepartmentListResponse{
+  repeated DepartmentResponse departments = 1;
+}
+
+message DeleteDoctorResponse{
+  bool success = 1;
+  string message = 2;
+}
+
+message DeleteDoctorRequest{
+  string doctorId = 1;
+}

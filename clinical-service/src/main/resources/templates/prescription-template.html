@@ -1,0 +1,145 @@
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-4.dtd">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Prescription</title>
+    <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: sans-serif; font-size: 11pt; color: #333; line-height: 1.6; }
+        .header { width: 100%; border-bottom: 2px solid #1a5276; padding-bottom: 12px; margin-bottom: 18px; }
+        .header-table { width: 100%; }
+        .header-title { font-size: 22pt; font-weight: bold; color: #1a5276; }
+        .header-center { text-align: center; font-size: 14pt; font-weight: bold; }
+        .header-right { text-align: right; font-size: 8pt; color: #666; }
+        .patient-record { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+        .patient-record td { width: 33%; vertical-align: top; padding: 10px 8px; border: 1px solid #ccc; }
+        .patient-record td div { margin-bottom: 2px; }
+        .record-label { font-size: 9pt; color: #666; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .record-value { font-size: 12pt; font-weight: bold; margin-bottom: 4px; }
+        .diagnosis-row { border: 1px solid #ccc; padding: 12px; margin-bottom: 18px; }
+        .diagnosis-row p { margin: 6px 0; }
+        .drug-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+        .drug-table th { background-color: #1a5276; color: white; padding: 10px 8px; font-size: 10pt; text-align: left; }
+        .drug-table td { padding: 10px 8px; border: 1px solid #ccc; font-size: 10pt; }
+        .follow-up { border: 1px solid #ccc; padding: 12px; margin-bottom: 18px; font-size: 11pt; }
+        .signature { margin-top: 24px; }
+        .qr-placeholder { width: 80px; height: 80px; border: 1px dashed #999; text-align: center; line-height: 80px; font-size: 8pt; color: #999; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <table class="header-table">
+        <tr>
+            <td class="header-title" colspan="2">PRESCRIPTION</td>
+        </tr>
+        <tr>
+            <td style="text-align: center; font-size: 14pt; font-weight: bold; padding-top: 6px;" th:text="${patientName}">Patient Name</td>
+            <td style="text-align: right; font-size: 8pt; color: #666; padding-top: 6px;">
+                printed on: <span th:text="${#temporals.format(generatedAt, 'dd-MMM-yyyy HH:mm')}">date</span><br/>
+                PRESCRIPTION: <span th:text="${prescriptionId}">RX-001</span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Hospital Info -->
+<div style="text-align: center; font-size: 14pt; font-weight: bold; color: #1a5276; margin-top: 8px;" th:text="${hospitalName}">General Hospital</div>
+<div style="text-align: center; font-size: 9pt; color: #555; margin-bottom: 16px; line-height: 1.5;">
+    <span th:text="${hospitalAddress}">123 Healthcare Ave, New York, NY 10001</span><br/>
+    phNo: <span th:text="${hospitalPhone} ?: 'N/A'">(555) 123-4567</span> | email: <span th:text="${hospitalEmail} ?: 'N/A'">info@hospital.com</span> | website: <span th:text="${hospitalWebsite} ?: 'N/A'">hospital.com</span>
+</div>
+
+<!-- Patient Record: 3-column layout -->
+<table class="patient-record">
+    <tr>
+        <td>
+            <div class="record-label">PATIENT</div>
+            <div class="record-value" th:text="${patientName}">Name</div>
+            <div>Gender: <span th:text="${patientGender} ?: 'N/A'">M</span></div>
+            <div>DOB: <span th:text="${patientDob}">2000-01-01</span></div>
+            <div>ID: <span th:text="${patientId}">PMS-101</span></div>
+            <div>Age: <span th:text="${age}">36y 2m 9d</span></div>
+        </td>
+        <td>
+            <div class="record-label">CONTACT</div>
+            <div>Phone: <span th:text="${patientPhone} ?: 'N/A'">+1-555-...</span></div>
+            <div>Email: <span th:text="${patientEmail} ?: 'N/A'">john@example.com</span></div>
+        </td>
+        <td>
+            <div class="record-label">DOCTOR</div>
+            <div class="record-value" th:text="${doctorName}">Dr. Name</div>
+            <div>Dept: <span th:text="${departmentName}">Cardiology</span></div>
+            <div>Phone: <span th:text="${doctorPhone} ?: 'N/A'">+1-555-...</span></div>
+            <div>Email: <span th:text="${doctorEmail} ?: 'N/A'">dr@...</span></div>
+            <div>Consultation: <span th:text="${#temporals.format(consultationDate, 'dd-MMM-yyyy HH:mm')}">30-May-2026 17:00</span></div>
+        </td>
+    </tr>
+</table>
+
+<!-- Diagnosis Row -->
+<div class="diagnosis-row">
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%; vertical-align: top; border: none; padding: 0;">
+                <p style="margin: 0;"><strong>DIAGNOSIS</strong></p>
+                <p style="margin: 6px 0 0 0;" th:text="${diagnosis}">Diagnosis text</p>
+            </td>
+            <td style="width: 50%; vertical-align: top; text-align: right; border: none; padding: 0;">
+                <p style="margin: 0;"><strong>Allergies:</strong> <span th:text="${allergies} ?: 'None reported'">None</span></p>
+                <p style="margin: 6px 0 0 0;"><strong>Pain Score:</strong> <span th:text="${painScore} + '/10'">3/10</span></p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Doctor's Note -->
+<div style="border: 1px solid #ccc; padding: 10px 12px; margin-bottom: 14px; background: #fafafa;">
+    <p style="margin: 0; font-size: 10pt; color: #1a5276; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Doctor's Note</p>
+    <p style="margin: 4px 0 0 0; font-size: 10pt;" th:text="${doctorNote}">Doctor's notes</p>
+</div>
+
+<!-- Drug Table -->
+<table class="drug-table">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Drug</th>
+        <th>Dosage</th>
+        <th>Type</th>
+        <th>Instructions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="drug, iter : ${drugs}">
+        <td th:text="${iter.count}">1</td>
+        <td th:text="${drug.name}">Amoxicillin</td>
+        <td th:text="${drug.dosage}">500mg</td>
+        <td th:text="${drug.type}">Tablet</td>
+        <td th:text="${drug.usage}">Twice daily</td>
+    </tr>
+    </tbody>
+</table>
+
+<!-- Follow-up -->
+<div class="follow-up" th:if="${followUpWeeks != null}">
+    <strong>Follow-up:</strong> <span th:text="${followUpWeeks} + ' weeks'">2 weeks</span>
+</div>
+
+<!-- Signature + QR -->
+<table style="width: 100%; margin-top: 16px;">
+    <tr>
+        <td class="signature">
+            <div>_________________________</div>
+            <div style="font-weight: bold; font-size: 11pt; margin-top: 6px;" th:text="${doctorName}">Dr. Name</div>
+            <div style="font-size: 9pt; color: #666; margin-top: 2px;" th:text="${hospitalName}">Hospital Name</div>
+        </td>
+        <td style="text-align: right; vertical-align: bottom; padding-bottom: 4px;">
+            <div class="qr-placeholder">QR</div>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
