@@ -3,13 +3,13 @@ package com.pms.authservice.service.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
@@ -24,7 +24,7 @@ public class JwtUtil {
     public JwtUtil(@Value("${jwt.secret}") String secret) {
         byte[] keyBytes = Base64.getDecoder()
                 .decode(secret.getBytes(StandardCharsets.UTF_8));
-        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
     }
 
     public String generateToken(String email, String role, Map<String, Object> extraClaims) {

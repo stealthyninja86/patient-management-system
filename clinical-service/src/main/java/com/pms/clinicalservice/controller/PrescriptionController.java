@@ -1,18 +1,19 @@
 package com.pms.clinicalservice.controller;
 
-import com.pms.clinicalservice.dto.DoctorContactUpdateDTO;
-import com.pms.clinicalservice.dto.HospitalContactUpdateDTO;
-import com.pms.clinicalservice.dto.PatientContactUpdateDTO;
-import com.pms.clinicalservice.dto.PrescriptionRequestDTO;
-import com.pms.clinicalservice.dto.PrescriptionResponseDTO;
+import com.pms.clinicalservice.dto.request.DoctorContactUpdateDTO;
+import com.pms.clinicalservice.dto.request.HospitalContactUpdateDTO;
+import com.pms.clinicalservice.dto.request.PatientContactUpdateDTO;
+import com.pms.clinicalservice.dto.request.PrescriptionRequestDTO;
+import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.service.facade.PrescriptionFacade;
 import com.pms.clinicalservice.service.PrescriptionService;
-import com.pms.clinicalservice.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -24,15 +25,12 @@ public class PrescriptionController {
 
     private final PrescriptionFacade prescriptionFacade;
     private final PrescriptionService prescriptionService;
-    private final JwtUtil jwtUtil;
     private final Logger logger = LoggerFactory.getLogger(PrescriptionController.class);
 
     public PrescriptionController(PrescriptionFacade prescriptionFacade,
-                                  PrescriptionService prescriptionService,
-                                  JwtUtil jwtUtil) {
+                                  PrescriptionService prescriptionService) {
         this.prescriptionFacade = prescriptionFacade;
         this.prescriptionService = prescriptionService;
-        this.jwtUtil = jwtUtil;
     }
 
     @GetMapping("/{id}")
@@ -71,11 +69,10 @@ public class PrescriptionController {
 
     @PostMapping
     public ResponseEntity<PrescriptionResponseDTO> createPrescription(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestBody PrescriptionRequestDTO request) {
 
-        String token = authHeader.replace("Bearer ", "");
-        String doctorId = jwtUtil.getDoctorIdFromToken(token);
+        String doctorId = jwt.getClaimAsString("doctorId");
 
         logger.info("Creating prescription for patient {} by doctor {}", request.patientId(), doctorId);
         PrescriptionResponseDTO response = prescriptionFacade.createPrescription(request, doctorId);

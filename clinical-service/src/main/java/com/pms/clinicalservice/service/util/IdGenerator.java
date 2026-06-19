@@ -1,4 +1,4 @@
-package com.pms.patient_service.service.util;
+package com.pms.clinicalservice.service.util;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -14,10 +14,10 @@ public class IdGenerator {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public String nextId(String prefix, String sequenceName) {
-        log.debug("Generating next ID with prefix: {} and sequence: {}", prefix, sequenceName);
+    public String nextId(String prefix, String columnName) {
+        log.debug("Generating next id with prefix: {}, sequence: {}", prefix, columnName);
         Number nextVal = (Number) entityManager
-                .createNativeQuery("SELECT nextval('" + sequenceName + "')")
+                .createNativeQuery("SELECT nextval('" + columnName + "')")
                 .getSingleResult();
         return prefix + String.format("%03d", nextVal.intValue());
     }

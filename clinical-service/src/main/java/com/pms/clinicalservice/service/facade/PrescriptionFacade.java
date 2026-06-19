@@ -1,9 +1,9 @@
 package com.pms.clinicalservice.service.facade;
 
-import com.pms.clinicalservice.dto.PrescriptionRequestDTO;
-import com.pms.clinicalservice.dto.PrescriptionResponseDTO;
+import com.pms.clinicalservice.dto.request.PrescriptionRequestDTO;
+import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.exception.*;
-import com.pms.clinicalservice.service.factory.PrescriptionFactory;
+import com.pms.clinicalservice.service.factory.PrescriptionAssembler;
 import com.pms.clinicalservice.grpc.HospitalGrpcClient;
 import com.pms.clinicalservice.grpc.PatientGrpcClient;
 import com.pms.clinicalservice.grpc.ScheduleGrpcClient;
@@ -17,7 +17,7 @@ import com.pms.clinicalservice.repository.PrescriptionDocumentRepository;
 import com.pms.clinicalservice.repository.PrescriptionRepository;
 import com.pms.clinicalservice.service.PrescriptionService;
 import com.pms.clinicalservice.service.storage.StorageService;
-import com.pms.clinicalservice.util.IdGenerator;
+import com.pms.clinicalservice.service.util.IdGenerator;
 import hospital.DepartmentResponse;
 import hospital.DoctorResponse;
 import hospital.HospitalResponse;
@@ -44,7 +44,7 @@ public class PrescriptionFacade {
     private static final Logger log = LoggerFactory.getLogger(PrescriptionFacade.class);
 
     private final PrescriptionService prescriptionService;
-    private final PrescriptionFactory prescriptionFactory;
+    private final PrescriptionAssembler prescriptionFactory;
     private final PrescriptionRepository prescriptionRepository;
     private final ScheduleGrpcClient scheduleGrpcClient;
     private final HospitalGrpcClient hospitalGrpcClient;
@@ -55,7 +55,7 @@ public class PrescriptionFacade {
     private final StorageService storageService;
 
     public PrescriptionFacade(PrescriptionService prescriptionService,
-                              PrescriptionFactory prescriptionFactory,
+                              PrescriptionAssembler prescriptionFactory,
                               PrescriptionRepository prescriptionRepository,
                               ScheduleGrpcClient scheduleGrpcClient,
                               HospitalGrpcClient hospitalGrpcClient,

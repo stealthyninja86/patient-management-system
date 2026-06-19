@@ -1,7 +1,7 @@
 package com.pms.hospitalservice.grpc;
 
 import com.pms.hospitalservice.dto.request.DoctorRequestDTO;
-import com.pms.hospitalservice.service.factory.DoctorFactory;
+import com.pms.hospitalservice.service.factory.DoctorMapper;
 import com.pms.hospitalservice.model.Department;
 import com.pms.hospitalservice.model.Doctor;
 import com.pms.hospitalservice.model.Hospital;
@@ -119,7 +119,7 @@ public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImpl
     public void createDoctor(CreateDoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
         log.info("gRPC createDoctor: {}", request.getName());
         try {
-            Doctor doctor = DoctorFactory.createEntity(
+            Doctor doctor = DoctorMapper.createEntity(
                     new DoctorRequestDTO(
                             request.getName(), "", "", request.getDepartmentId(), request.getEmail(), request.getPhone()
                     )

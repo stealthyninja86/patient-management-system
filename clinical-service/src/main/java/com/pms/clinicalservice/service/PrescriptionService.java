@@ -1,11 +1,11 @@
 package com.pms.clinicalservice.service;
 
-import com.pms.clinicalservice.dto.DoctorContactUpdateDTO;
-import com.pms.clinicalservice.dto.HospitalContactUpdateDTO;
-import com.pms.clinicalservice.dto.PatientContactUpdateDTO;
-import com.pms.clinicalservice.dto.PrescriptionResponseDTO;
+import com.pms.clinicalservice.dto.request.DoctorContactUpdateDTO;
+import com.pms.clinicalservice.dto.request.HospitalContactUpdateDTO;
+import com.pms.clinicalservice.dto.request.PatientContactUpdateDTO;
+import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.exception.PrescriptionNotFoundException;
-import com.pms.clinicalservice.service.factory.PrescriptionFactory;
+import com.pms.clinicalservice.service.factory.PrescriptionAssembler;
 import com.pms.clinicalservice.model.Prescription;
 import com.pms.clinicalservice.repository.PrescriptionRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -27,10 +27,10 @@ public class PrescriptionService {
     private static final Logger log = LoggerFactory.getLogger(PrescriptionService.class);
 
     private final PrescriptionRepository prescriptionRepository;
-    private final PrescriptionFactory prescriptionFactory;
+    private final PrescriptionAssembler prescriptionFactory;
 
     public PrescriptionService(PrescriptionRepository prescriptionRepository,
-                               PrescriptionFactory prescriptionFactory) {
+                               PrescriptionAssembler prescriptionFactory) {
         this.prescriptionRepository = prescriptionRepository;
         this.prescriptionFactory = prescriptionFactory;
     }

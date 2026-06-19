@@ -1,9 +1,9 @@
 package com.pms.scheduleservice.controller;
 
-import com.pms.scheduleservice.dto.AppointmentRequestDTO;
-import com.pms.scheduleservice.dto.AppointmentResponseDTO;
-import com.pms.scheduleservice.dto.DoctorPatientDTO;
-import com.pms.scheduleservice.dto.RescheduleRequestDTO;
+import com.pms.scheduleservice.dto.request.AppointmentRequestDTO;
+import com.pms.scheduleservice.dto.response.AppointmentResponseDTO;
+import com.pms.scheduleservice.dto.response.DoctorPatientDTO;
+import com.pms.scheduleservice.dto.request.RescheduleRequestDTO;
 import com.pms.scheduleservice.service.facade.AppointmentFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

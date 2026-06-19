@@ -1,7 +1,7 @@
 package com.pms.scheduleservice.controller;
 
-import com.pms.scheduleservice.dto.TimeSlotRequestDTO;
-import com.pms.scheduleservice.dto.TimeSlotResponseDTO;
+import com.pms.scheduleservice.dto.request.TimeSlotRequestDTO;
+import com.pms.scheduleservice.dto.response.TimeSlotResponseDTO;
 import com.pms.scheduleservice.service.facade.TimeSlotFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

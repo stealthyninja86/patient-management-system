@@ -6,7 +6,7 @@ import com.pms.notificationservice.model.Notification;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationStatus;
 import com.pms.notificationservice.repository.NotificationRepository;
-import com.pms.notificationservice.service.factory.NotificationFactory;
+import com.pms.notificationservice.service.factory.NotificationMapper;
 import io.micrometer.core.instrument.Counter;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ public class NotificationService {
     private final Counter notificationFailedCounter;
     private final Counter dedupHitCounter;
     private final Counter dedupMissCounter;
-    private final NotificationFactory notificationFactory;
+    private final NotificationMapper notificationFactory;
 
     public NotificationService(NotificationRepository notificationRepository,
                                StringRedisTemplate redisTemplate,
@@ -52,7 +52,7 @@ public class NotificationService {
                                Counter notificationFailedCounter,
                                Counter dedupHitCounter,
                                Counter dedupMissCounter,
-                               NotificationFactory notificationFactory) {
+                               NotificationMapper notificationFactory) {
         this.notificationRepository = notificationRepository;
         this.redisTemplate = redisTemplate;
         this.providers = providers;

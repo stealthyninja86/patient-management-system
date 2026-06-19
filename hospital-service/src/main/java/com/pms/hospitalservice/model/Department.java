@@ -21,7 +21,7 @@ public class Department {
     @JoinColumn(name = "hospital_id")
     private Hospital hospital;
 
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "department", cascade = CascadeType.PERSIST)
     private List<Doctor> doctorList;
 
     public Department() {}

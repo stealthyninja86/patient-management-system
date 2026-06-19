@@ -1,6 +1,6 @@
 package com.pms.scheduleservice.service;
 
-import com.pms.scheduleservice.service.factory.AppointmentFactory;
+import com.pms.scheduleservice.service.factory.AppointmentAssembler;
 import com.pms.scheduleservice.model.Appointment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +14,10 @@ public class AppointmentKafkaProducer {
     private static final Logger log = LoggerFactory.getLogger(AppointmentKafkaProducer.class);
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final AppointmentFactory appointmentFactory;
+    private final AppointmentAssembler appointmentFactory;
 
     public AppointmentKafkaProducer(KafkaTemplate<String, Object> kafkaTemplate,
-                                     AppointmentFactory appointmentFactory) {
+                                     AppointmentAssembler appointmentFactory) {
         this.kafkaTemplate = kafkaTemplate;
         this.appointmentFactory = appointmentFactory;
     }

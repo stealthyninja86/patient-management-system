@@ -7,7 +7,7 @@ import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.model.Otp;
 import com.pms.notificationservice.model.OtpStatus;
 import com.pms.notificationservice.repository.OtpRepository;
-import com.pms.notificationservice.service.factory.OtpFactory;
+import com.pms.notificationservice.service.factory.OtpCreator;
 import com.pms.notificationservice.service.strategy.ChannelRouter;
 import io.micrometer.core.instrument.Counter;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class OtpService {
     private final Counter otpGeneratedCounter;
     private final Counter otpVerifiedCounter;
     private final Counter otpFailedCounter;
-    private final OtpFactory otpFactory;
+    private final OtpCreator otpFactory;
 
     public OtpService(OtpRepository otpRepository,
                       StringRedisTemplate redisTemplate,
@@ -49,7 +49,7 @@ public class OtpService {
                       Counter otpGeneratedCounter,
                       Counter otpVerifiedCounter,
                       Counter otpFailedCounter,
-                      OtpFactory otpFactory) {
+                      OtpCreator otpFactory) {
         this.otpRepository = otpRepository;
         this.redisTemplate = redisTemplate;
         this.otpNotificationTemplate = otpNotificationTemplate;

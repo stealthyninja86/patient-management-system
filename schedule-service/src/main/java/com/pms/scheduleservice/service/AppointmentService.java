@@ -1,15 +1,15 @@
 package com.pms.scheduleservice.service;
 
-import com.pms.scheduleservice.dto.AppointmentRequestDTO;
-import com.pms.scheduleservice.dto.AppointmentResponseDTO;
-import com.pms.scheduleservice.dto.DoctorPatientDTO;
+import com.pms.scheduleservice.dto.request.AppointmentRequestDTO;
+import com.pms.scheduleservice.dto.response.AppointmentResponseDTO;
+import com.pms.scheduleservice.dto.response.DoctorPatientDTO;
 import com.pms.scheduleservice.exception.PatientNotFoundException;
 import com.pms.scheduleservice.grpc.PatientGrpcClient;
 import com.pms.scheduleservice.exception.AppointmentNotFoundException;
 import com.pms.scheduleservice.exception.InvalidAppointmentOperationException;
 import com.pms.scheduleservice.exception.TimeSlotNotAvailableException;
 import com.pms.scheduleservice.exception.TimeSlotNotFoundException;
-import com.pms.scheduleservice.service.factory.AppointmentFactory;
+import com.pms.scheduleservice.service.factory.AppointmentAssembler;
 import com.pms.scheduleservice.model.Appointment;
 import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;
@@ -32,14 +32,14 @@ public class AppointmentService {
     private final TimeSlotRepository timeSlotRepository;
     private final AppointmentKafkaProducer kafkaProducer;
     private final IdGenerator idGenerator;
-    private final AppointmentFactory appointmentFactory;
+    private final AppointmentAssembler appointmentFactory;
     private final PatientGrpcClient patientGrpcClient;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                                TimeSlotRepository timeSlotRepository,
                                AppointmentKafkaProducer kafkaProducer,
                                IdGenerator idGenerator,
-                               AppointmentFactory appointmentFactory,
+                               AppointmentAssembler appointmentFactory,
                                PatientGrpcClient patientGrpcClient) {
         this.appointmentRepository = appointmentRepository;
         this.timeSlotRepository = timeSlotRepository;
