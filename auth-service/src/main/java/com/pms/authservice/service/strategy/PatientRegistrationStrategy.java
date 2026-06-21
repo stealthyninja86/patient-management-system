@@ -7,7 +7,7 @@ import com.pms.authservice.grpc.PatientGrpcClient;
 import com.pms.authservice.model.Role;
 import com.pms.authservice.model.User;
 import com.pms.authservice.service.UserService;
-import com.pms.authservice.service.adapter.RegistrationEventPublisher;
+import com.pms.authservice.service.strategy.RegistrationEventPublisherStrategy;
 import com.pms.authservice.service.mapper.UserMapper;
 import com.pms.authservice.service.saga.RegistrationSaga;
 import org.slf4j.Logger;
@@ -24,12 +24,12 @@ public class PatientRegistrationStrategy implements RegistrationStrategy<Patient
     private final PatientGrpcClient patientGrpcClient;
     private final UserService userService;
     private final UserMapper userMapper;
-    private final RegistrationEventPublisher eventPublisher;
+    private final RegistrationEventPublisherStrategy eventPublisher;
     private final ObjectProvider<RegistrationSaga> sagaProvider;
 
     public PatientRegistrationStrategy(PatientGrpcClient patientGrpcClient,
                                        UserService userService, UserMapper userMapper,
-                                       RegistrationEventPublisher eventPublisher,
+                                       RegistrationEventPublisherStrategy eventPublisher,
                                        ObjectProvider<RegistrationSaga> sagaProvider
                                        ) {
         this.patientGrpcClient = patientGrpcClient;

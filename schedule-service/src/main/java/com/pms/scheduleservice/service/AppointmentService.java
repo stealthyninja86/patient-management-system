@@ -9,7 +9,7 @@ import com.pms.scheduleservice.exception.AppointmentNotFoundException;
 import com.pms.scheduleservice.exception.InvalidAppointmentOperationException;
 import com.pms.scheduleservice.exception.TimeSlotNotAvailableException;
 import com.pms.scheduleservice.exception.TimeSlotNotFoundException;
-import com.pms.scheduleservice.service.factory.AppointmentAssembler;
+import com.pms.scheduleservice.service.mapper.AppointmentMapper;
 import com.pms.scheduleservice.model.Appointment;
 import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;
@@ -32,27 +32,27 @@ public class AppointmentService {
     private final TimeSlotRepository timeSlotRepository;
     private final AppointmentKafkaProducer kafkaProducer;
     private final IdGenerator idGenerator;
-    private final AppointmentAssembler appointmentFactory;
+    private final AppointmentMapper appointmentMapper;
     private final PatientGrpcClient patientGrpcClient;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                                TimeSlotRepository timeSlotRepository,
                                AppointmentKafkaProducer kafkaProducer,
                                IdGenerator idGenerator,
-                               AppointmentAssembler appointmentFactory,
+                               AppointmentMapper appointmentMapper,
                                PatientGrpcClient patientGrpcClient) {
         this.appointmentRepository = appointmentRepository;
         this.timeSlotRepository = timeSlotRepository;
         this.kafkaProducer = kafkaProducer;
         this.idGenerator = idGenerator;
-        this.appointmentFactory = appointmentFactory;
+        this.appointmentMapper = appointmentMapper;
         this.patientGrpcClient = patientGrpcClient;
     }
 
     public List<AppointmentResponseDTO> getAllAppointments() {
         log.debug("Fetching all appointments");
         return appointmentRepository.findAll().stream()
-                .map(appointmentFactory::toResponseDTO)
+                .map(appointmentMapper::toResponseDTO)
                 .toList();
     }
 
@@ -60,20 +60,20 @@ public class AppointmentService {
         log.debug("Fetching appointment by id: {}", appointmentId);
         Appointment appointment = appointmentRepository.findByAppointmentId(appointmentId)
                 .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
-        return appointmentFactory.toResponseDTO(appointment);
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
     public List<AppointmentResponseDTO> getAppointmentsByPatient(String patientId) {
         log.debug("Fetching appointments by patient: {}", patientId);
         return appointmentRepository.findByPatientId(patientId).stream()
-                .map(appointmentFactory::toResponseDTO)
+                .map(appointmentMapper::toResponseDTO)
                 .toList();
     }
 
     public List<AppointmentResponseDTO> getAppointmentsByDoctor(String doctorId) {
         log.debug("Fetching appointments by doctor: {}", doctorId);
         return appointmentRepository.findByDoctorId(doctorId).stream()
-                .map(appointmentFactory::toResponseDTO)
+                .map(appointmentMapper::toResponseDTO)
                 .toList();
     }
 
@@ -106,7 +106,7 @@ public class AppointmentService {
         }
 
         String appointmentId = idGenerator.nextId("APT", "appointment_seq");
-        Appointment appointment = appointmentFactory.toEntity(request, appointmentId, timeSlot);
+        Appointment appointment = appointmentMapper.toEntity(request, appointmentId, timeSlot);
         appointment.setPatientName(patientResponse.getName());
         appointment.setPatientEmail(patientResponse.getEmail());
         appointment = appointmentRepository.save(appointment);
@@ -114,7 +114,7 @@ public class AppointmentService {
         kafkaProducer.sendAppointmentBookedEvent(appointment, patientResponse,
             timeSlot.getStartTime().toLocalDate().toString());
 
-        return appointmentFactory.toResponseDTO(appointment);
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
     @Transactional
@@ -142,7 +142,7 @@ public class AppointmentService {
 
         kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
 
-        return appointmentFactory.toResponseDTO(appointment);
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
     @Transactional
@@ -167,7 +167,7 @@ public class AppointmentService {
 
         kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
 
-        return appointmentFactory.toResponseDTO(appointment);
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
     @Transactional
@@ -207,7 +207,7 @@ public class AppointmentService {
 
         kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
 
-        return appointmentFactory.toResponseDTO(appointment);
+        return appointmentMapper.toResponseDTO(appointment);
     }
 
     private void validateTransition(AppointmentStatus current, AppointmentStatus next) {

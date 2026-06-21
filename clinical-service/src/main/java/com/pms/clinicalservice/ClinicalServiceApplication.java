@@ -1,6 +1,6 @@
 package com.pms.clinicalservice;
 
-import com.pms.clinicalservice.service.factory.PrescriptionAssembler;
+import com.pms.clinicalservice.service.mapper.PrescriptionMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +13,7 @@ public class ClinicalServiceApplication {
     }
 
     @Bean
-    public PrescriptionAssembler prescriptionFactory() {
-        return new PrescriptionAssembler();
+    public PrescriptionMapper prescriptionFactory() {
+        return new PrescriptionMapper();
     }
 }

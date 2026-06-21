@@ -6,7 +6,7 @@ import com.pms.notificationservice.model.Notification;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationStatus;
 import com.pms.notificationservice.repository.NotificationRepository;
-import com.pms.notificationservice.service.factory.NotificationMapper;
+import com.pms.notificationservice.service.mapper.NotificationMapper;
 import io.micrometer.core.instrument.Counter;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;

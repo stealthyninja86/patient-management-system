@@ -4,7 +4,7 @@ import com.pms.hospitalservice.dto.request.DoctorRequestDTO;
 import com.pms.hospitalservice.dto.response.DoctorResponseDTO;
 import com.pms.hospitalservice.exception.DepartmentNotFoundException;
 import com.pms.hospitalservice.exception.DoctorNotFoundException;
-import com.pms.hospitalservice.service.factory.DoctorMapper;
+import com.pms.hospitalservice.service.mapper.DoctorMapper;
 import com.pms.hospitalservice.model.Department;
 import com.pms.hospitalservice.model.Doctor;
 import com.pms.hospitalservice.repository.DepartmentRepository;

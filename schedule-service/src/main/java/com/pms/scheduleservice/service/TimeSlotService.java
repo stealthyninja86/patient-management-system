@@ -4,7 +4,7 @@ import com.pms.scheduleservice.dto.request.TimeSlotRequestDTO;
 import com.pms.scheduleservice.dto.response.TimeSlotResponseDTO;
 import com.pms.scheduleservice.exception.DoctorNotFoundException;
 import com.pms.scheduleservice.exception.TimeSlotNotFoundException;
-import com.pms.scheduleservice.service.factory.TimeSlotMapper;
+import com.pms.scheduleservice.service.mapper.TimeSlotMapper;
 import com.pms.scheduleservice.grpc.DoctorGrpcClient;
 import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;

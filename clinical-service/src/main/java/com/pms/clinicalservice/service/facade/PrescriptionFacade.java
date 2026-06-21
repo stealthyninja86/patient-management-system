@@ -3,7 +3,7 @@ package com.pms.clinicalservice.service.facade;
 import com.pms.clinicalservice.dto.request.PrescriptionRequestDTO;
 import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.exception.*;
-import com.pms.clinicalservice.service.factory.PrescriptionAssembler;
+import com.pms.clinicalservice.service.mapper.PrescriptionMapper;
 import com.pms.clinicalservice.grpc.HospitalGrpcClient;
 import com.pms.clinicalservice.grpc.PatientGrpcClient;
 import com.pms.clinicalservice.grpc.ScheduleGrpcClient;
@@ -44,7 +44,7 @@ public class PrescriptionFacade {
     private static final Logger log = LoggerFactory.getLogger(PrescriptionFacade.class);
 
     private final PrescriptionService prescriptionService;
-    private final PrescriptionAssembler prescriptionFactory;
+    private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionRepository prescriptionRepository;
     private final ScheduleGrpcClient scheduleGrpcClient;
     private final HospitalGrpcClient hospitalGrpcClient;
@@ -55,7 +55,7 @@ public class PrescriptionFacade {
     private final StorageService storageService;
 
     public PrescriptionFacade(PrescriptionService prescriptionService,
-                              PrescriptionAssembler prescriptionFactory,
+                              PrescriptionMapper prescriptionMapper,
                               PrescriptionRepository prescriptionRepository,
                               ScheduleGrpcClient scheduleGrpcClient,
                               HospitalGrpcClient hospitalGrpcClient,
@@ -65,7 +65,7 @@ public class PrescriptionFacade {
                               PrescriptionDocumentRepository prescriptionDocumentRepository,
                               StorageService storageService) {
         this.prescriptionService = prescriptionService;
-        this.prescriptionFactory = prescriptionFactory;
+        this.prescriptionMapper = prescriptionMapper;
         this.prescriptionRepository = prescriptionRepository;
         this.scheduleGrpcClient = scheduleGrpcClient;
         this.hospitalGrpcClient = hospitalGrpcClient;
@@ -82,7 +82,7 @@ public class PrescriptionFacade {
             Optional<Prescription> existing = prescriptionRepository.findByIdempotencyKey(request.idempotencyKey());
             if (existing.isPresent()) {
                 log.info("Idempotency hit for key: {}, returning existing prescription: {}", request.idempotencyKey(), existing.get().getPrescriptionId());
-                return prescriptionFactory.toPrescriptionResponseDTO(existing.get());
+                return prescriptionMapper.toPrescriptionResponseDTO(existing.get());
             }
         }
 
@@ -127,7 +127,7 @@ public class PrescriptionFacade {
                 ? request.drugs().stream()
                     .map(drugInput -> {
                         String drugId = idGenerator.nextId("DRG-", "drug_id_seq");
-                        return prescriptionFactory.toDrugEntity(drugInput, drugId);
+                        return prescriptionMapper.toDrugEntity(drugInput, drugId);
                     })
                     .collect(Collectors.toList())
                 : List.of();
@@ -136,7 +136,7 @@ public class PrescriptionFacade {
                 ? appointmentResult.appointmentTime()
                 : LocalDateTime.now();
 
-        Prescription prescription = prescriptionFactory.toPrescriptionEntity(
+        Prescription prescription = prescriptionMapper.toPrescriptionEntity(
                 request, doctorId, doctorResponse, deptResponse, hospitalResponse, patientResponse,
                 drugs, consultationDate);
         prescription.setPrescriptionId(prescriptionId);
@@ -148,7 +148,7 @@ public class PrescriptionFacade {
                 Optional<Prescription> existing = prescriptionRepository.findByIdempotencyKey(request.idempotencyKey());
                 if (existing.isPresent()) {
                     log.warn("Race condition: idempotency key {} already persisted, returning existing", request.idempotencyKey());
-                    return prescriptionFactory.toPrescriptionResponseDTO(existing.get());
+                    return prescriptionMapper.toPrescriptionResponseDTO(existing.get());
                 }
             }
             throw e;
@@ -156,7 +156,7 @@ public class PrescriptionFacade {
 
         enqueuePdfGeneration(prescriptionId);
 
-        return prescriptionFactory.toPrescriptionResponseDTO(prescription);
+        return prescriptionMapper.toPrescriptionResponseDTO(prescription);
     }
 
     @CircuitBreaker(name = "scheduleService", fallbackMethod = "checkAppointmentFallback")
