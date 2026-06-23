@@ -20,15 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @GrpcService
-public class HospitalGrpcService extends HospitalServiceGrpc.HospitalServiceImplBase {
+public class HospitalGrpcServer extends HospitalServiceGrpc.HospitalServiceImplBase {
 
-    private static final Logger log = LoggerFactory.getLogger(HospitalGrpcService.class);
+    private static final Logger log = LoggerFactory.getLogger(HospitalGrpcServer.class);
     private final DoctorRepository doctorRepository;
     private final DepartmentRepository departmentRepository;
     private final HospitalRepository hospitalRepository;
     private final IdGenerator idGenerator;
 
-    public HospitalGrpcService(DoctorRepository doctorRepository, DepartmentRepository departmentRepository, HospitalRepository hospitalRepository, IdGenerator idGenerator) {
+    public HospitalGrpcServer(DoctorRepository doctorRepository, DepartmentRepository departmentRepository, HospitalRepository hospitalRepository, IdGenerator idGenerator) {
         this.doctorRepository = doctorRepository;
         this.departmentRepository = departmentRepository;
         this.hospitalRepository = hospitalRepository;

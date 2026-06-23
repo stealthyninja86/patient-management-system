@@ -13,12 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @GrpcService
-public class PatientGrpcService extends PatientServiceImplBase {
+public class PatientGrpcServer extends PatientServiceImplBase {
 
-    private static final Logger log = LoggerFactory.getLogger(PatientGrpcService.class);
+    private static final Logger log = LoggerFactory.getLogger(PatientGrpcServer.class);
     private final PatientFacade patientFacade;
 
-    public PatientGrpcService(PatientFacade patientFacade) {
+    public PatientGrpcServer(PatientFacade patientFacade) {
         this.patientFacade = patientFacade;
     }
 

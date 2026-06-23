@@ -1,10 +1,8 @@
 package com.pms.scheduleservice.grpc;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import patient.PatientByIdRequest;
 import patient.PatientResponse;
@@ -15,17 +13,8 @@ public class PatientGrpcClient {
 
     private static final Logger log = LoggerFactory.getLogger(PatientGrpcClient.class);
 
-    private final PatientServiceGrpc.PatientServiceBlockingStub blockingStub;
-
-    public PatientGrpcClient(
-            @Value("${patient.service.address}") String host,
-            @Value("${patient.service.grpc.port}") int port) {
-        ManagedChannel channel = ManagedChannelBuilder
-                .forAddress(host, port)
-                .usePlaintext()
-                .build();
-        blockingStub = PatientServiceGrpc.newBlockingStub(channel);
-    }
+    @GrpcClient("patient-service")
+    private PatientServiceGrpc.PatientServiceBlockingStub blockingStub;
 
     public PatientResponse getPatientById(String patientId) {
         log.debug("Fetching patient by id: {}", patientId);

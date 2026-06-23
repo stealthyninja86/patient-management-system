@@ -6,51 +6,28 @@ import com.pms.scheduleservice.model.TimeSlot;
 import com.pms.scheduleservice.repository.AppointmentRepository;
 import com.pms.scheduleservice.repository.TimeSlotRepository;
 import java.util.List;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import net.devh.boot.grpc.server.service.GrpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import schedule.HasOngoingAppointmentRequest;
 import schedule.HasOngoingAppointmentResponse;
 import schedule.ScheduleServiceGrpc;
 
-import java.io.IOException;
 import java.util.Optional;
 
-@Component
+@GrpcService
 public class ScheduleGrpcServer extends ScheduleServiceGrpc.ScheduleServiceImplBase {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduleGrpcServer.class);
 
     private final AppointmentRepository appointmentRepository;
     private final TimeSlotRepository timeSlotRepository;
-    private Server server;
 
     public ScheduleGrpcServer(AppointmentRepository appointmentRepository,
                               TimeSlotRepository timeSlotRepository) {
         this.appointmentRepository = appointmentRepository;
         this.timeSlotRepository = timeSlotRepository;
-    }
-
-    @PostConstruct
-    public void start() throws IOException {
-        server = ServerBuilder.forPort(9009)
-                .addService(this)
-                .build()
-                .start();
-        log.info("gRPC server started on port 9009");
-    }
-
-    @PreDestroy
-    public void stop() {
-        if (server != null) {
-            server.shutdown();
-            log.info("gRPC server stopped");
-        }
     }
 
     @Override

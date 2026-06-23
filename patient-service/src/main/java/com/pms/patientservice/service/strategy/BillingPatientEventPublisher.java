@@ -1,6 +1,6 @@
 package com.pms.patientservice.service.strategy;
 
-import com.pms.patientservice.grpc.BillingServiceGrpcClient;
+import com.pms.patientservice.grpc.BillingGrpcClient;
 import com.pms.patientservice.model.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +11,9 @@ public class BillingPatientEventPublisher implements PatientEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(BillingPatientEventPublisher.class);
 
-    private final BillingServiceGrpcClient billingClient;
+    private final BillingGrpcClient billingClient;
 
-    public BillingPatientEventPublisher(BillingServiceGrpcClient billingClient) {
+    public BillingPatientEventPublisher(BillingGrpcClient billingClient) {
         this.billingClient = billingClient;
     }
 

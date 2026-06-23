@@ -6,7 +6,7 @@ import com.pms.patientservice.dto.response.PatientResponseDTO;
 import com.pms.patientservice.exception.EmailAlreadyExistsException;
 import com.pms.patientservice.exception.PatientNotFoundException;
 import com.pms.patientservice.service.mapper.PatientMapper;
-import com.pms.patientservice.grpc.BillingServiceGrpcClient;
+import com.pms.patientservice.grpc.BillingGrpcClient;
 import com.pms.patientservice.model.Patient;
 import com.pms.patientservice.repository.PatientRepository;
 import com.pms.patientservice.service.PatientService;
@@ -28,18 +28,18 @@ public class PatientFacade {
     private final PatientService patientService;
     private final PatientRepository patientRepository;
     private final PatientEventOrchestrator patientEventOrchestrator;
-    private final BillingServiceGrpcClient billingServiceGrpcClient;
+    private final BillingGrpcClient billingGrpcClient;
     private final PatientMapper patientMapper;
 
     public PatientFacade(PatientService patientService,
                          PatientRepository patientRepository,
                          PatientEventOrchestrator patientEventOrchestrator,
-                         BillingServiceGrpcClient billingServiceGrpcClient,
+                         BillingGrpcClient billingGrpcClient,
                          PatientMapper patientMapper) {
         this.patientService = patientService;
         this.patientRepository = patientRepository;
         this.patientEventOrchestrator = patientEventOrchestrator;
-        this.billingServiceGrpcClient = billingServiceGrpcClient;
+        this.billingGrpcClient = billingGrpcClient;
         this.patientMapper = patientMapper;
     }
 
@@ -57,7 +57,7 @@ public class PatientFacade {
             throw new EmailAlreadyExistsException("A patient with this email " + dto.getEmail() + " already exists");
         }
         Patient created = patientService.createPatient(dto);
-        billingServiceGrpcClient.createBillingAccount(created.getPatientId(), created.getName(), created.getEmail());
+        billingGrpcClient.createBillingAccount(created.getPatientId(), created.getName(), created.getEmail());
         patientEventOrchestrator.publishAll(created);
         return patientMapper.toResponseDTO(created);
     }
@@ -70,7 +70,7 @@ public class PatientFacade {
         }
         Patient patient = patientMapper.createPatient(dto);
         Patient saved = patientRepository.save(patient);
-        billingServiceGrpcClient.createBillingAccount(saved.getPatientId(), saved.getName(), saved.getEmail());
+        billingGrpcClient.createBillingAccount(saved.getPatientId(), saved.getName(), saved.getEmail());
         patientEventOrchestrator.publishAll(saved);
         return patientMapper.toResponseDTO(saved);
     }

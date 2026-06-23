@@ -57,6 +57,9 @@ services:
       context: ./patient-service
       dockerfile: Dockerfile
     container_name: patient-service
+    ports:
+      - "4000:4000"
+      - "9000:9000"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://patient-service-db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
@@ -64,8 +67,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SQL_INIT_MODE: always
       GRPC_SERVER_PORT: 9000
-      BILLING_SERVICE_ADDRESS: billing-service
-      BILLING_SERVICE_GRPC_PORT: 9001
+      # gRPC client uses discovery:/// via Eureka — no static host/port needed
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       patient-service-db:
@@ -130,6 +132,25 @@ services:
     networks:
       - internal
 
+  #eureka server
+  eureka-server:
+    image: eureka-server:latest
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:password@eureka-server:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://eureka:password@eureka-server:8761/eureka/apps"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
   #Auth service db
   auth-service-db:
     image: postgres:latest
@@ -163,11 +184,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SQL_INIT_MODE: always
-      JWT_SECRET: dGhpc0lzQVZlcnlTZWN1cmVTZWNyZXRLZXlGb3JKV1RUb2tlbkdlbmVyYXRpb24xMjM0NTY3OA==
-      HOSPITAL_SERVICE_GRPC_HOST: hospital-service
-      HOSPITAL_SERVICE_GRPC_PORT: 9003
-      PATIENT_SERVICE_GRPC_HOST: patient-service
-      PATIENT_SERVICE_GRPC_PORT: 9000
+      SPRING_PROFILES_ACTIVE: dev
+      # gRPC clients use discovery:/// via Eureka — no static host/port needed
     depends_on:
       auth-service-db:
         condition: service_healthy
