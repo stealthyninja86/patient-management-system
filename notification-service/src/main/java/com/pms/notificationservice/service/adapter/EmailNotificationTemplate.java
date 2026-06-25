@@ -3,7 +3,7 @@ package com.pms.notificationservice.service.adapter;
 import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.repository.NotificationRepository;
-import io.micrometer.core.instrument.Counter;
+import com.pms.notificationservice.service.metrics.MetricsService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,9 +17,8 @@ public class EmailNotificationTemplate extends NotificationTemplate {
 
     public EmailNotificationTemplate(NotificationRepository notificationRepository,
                                       List<NotificationProvider> providers,
-                                      Counter notificationSentCounter,
-                                      Counter notificationFailedCounter) {
-        super(notificationRepository, providers, notificationSentCounter, notificationFailedCounter);
+                                      MetricsService metrics) {
+        super(notificationRepository, providers, metrics);
     }
 
     @Override

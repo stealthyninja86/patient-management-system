@@ -22,6 +22,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/hospitals").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/hospitals/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/hospitals/**").hasRole("ADMIN")

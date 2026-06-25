@@ -74,6 +74,10 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -89,6 +93,10 @@ services:
     depends_on:
       kafka:
         condition: service_started
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -106,6 +114,10 @@ services:
     depends_on:
       kafka:
         condition: service_started
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -129,6 +141,10 @@ services:
         condition: service_started
       schedule-service:
         condition: service_started
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -193,6 +209,10 @@ services:
         condition: service_started
       hospital-service:
         condition: service_started
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -235,6 +255,10 @@ services:
     depends_on:
       hospital-service-db:
         condition: service_healthy
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -278,6 +302,10 @@ services:
     depends_on:
       clinical-service-db:
         condition: service_healthy
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -323,6 +351,10 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
     networks:
       - internal
 
@@ -369,24 +401,67 @@ services:
         condition: service_started
       redis:
         condition: service_started
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://logstash:5000"
+    networks:
+      - internal
+
+  zipkin:
+    image: openzipkin/zipkin:3.4.2
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
     networks:
       - internal
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
+    container_name: Prometheus
     ports:
       - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
+    depends_on:
+      - alertmanager
+    networks:
+      - internal
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
     networks:
       - internal
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
+    container_name: Grafana
     ports:
       - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
     depends_on:
       - prometheus
     networks:
@@ -394,7 +469,7 @@ services:
 
   loki:
     image: grafana/loki:latest
-    container_name: loki
+    container_name: Loki
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
@@ -412,6 +487,58 @@ services:
       - loki
     networks:
       - internal
+
+  elasticsearch:
+    image: elasticsearch:8.14.0
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  logstash:
+    image: logstash:8.14.0
+    container_name: logstash
+    ports:
+      - "5000:5000"
+      - "5000:5000/udp"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeling
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - internal
+  kibana:
+    image: kibana:8.14.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - internal
+
+volumes:
+  grafana_data:
+  prometheus_data:
+  elasticsearch_data:
 
 networks:
   internal:
