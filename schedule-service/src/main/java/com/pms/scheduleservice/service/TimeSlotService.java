@@ -1,10 +1,10 @@
 package com.pms.scheduleservice.service;
 
-import com.pms.scheduleservice.dto.TimeSlotRequestDTO;
-import com.pms.scheduleservice.dto.TimeSlotResponseDTO;
+import com.pms.scheduleservice.dto.request.TimeSlotRequestDTO;
+import com.pms.scheduleservice.dto.response.TimeSlotResponseDTO;
 import com.pms.scheduleservice.exception.DoctorNotFoundException;
 import com.pms.scheduleservice.exception.TimeSlotNotFoundException;
-import com.pms.scheduleservice.service.factory.TimeSlotFactory;
+import com.pms.scheduleservice.service.mapper.TimeSlotMapper;
 import com.pms.scheduleservice.grpc.DoctorGrpcClient;
 import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.model.TimeSlot;
@@ -29,13 +29,13 @@ public class TimeSlotService {
     private final TimeSlotRepository timeSlotRepository;
     private final AppointmentRepository appointmentRepository;
     private final IdGenerator idGenerator;
-    private final TimeSlotFactory timeSlotFactory;
+    private final TimeSlotMapper timeSlotFactory;
     private final DoctorGrpcClient doctorGrpcClient;
 
     public TimeSlotService(TimeSlotRepository timeSlotRepository,
                             AppointmentRepository appointmentRepository,
                             IdGenerator idGenerator,
-                            TimeSlotFactory timeSlotFactory,
+                            TimeSlotMapper timeSlotFactory,
                             DoctorGrpcClient doctorGrpcClient) {
         this.timeSlotRepository = timeSlotRepository;
         this.appointmentRepository = appointmentRepository;

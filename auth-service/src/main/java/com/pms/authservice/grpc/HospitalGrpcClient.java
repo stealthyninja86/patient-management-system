@@ -1,12 +1,10 @@
 package com.pms.authservice.grpc;
 
 import hospital.*;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import jakarta.annotation.PreDestroy;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import hospital.HospitalServiceGrpc.HospitalServiceBlockingStub;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,17 +13,9 @@ import java.util.List;
 public class HospitalGrpcClient {
 
     private static final Logger log = LoggerFactory.getLogger(HospitalGrpcClient.class);
-    private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
-    private final ManagedChannel channel;
 
-    public HospitalGrpcClient(
-            @Value("${hospital-service.grpc.host:localhost}") String host,
-            @Value("${hospital-service.grpc.port:9003}") int port) {
-        this.channel = ManagedChannelBuilder.forAddress(host, port)
-                .usePlaintext()
-                .build();
-        this.blockingStub = HospitalServiceGrpc.newBlockingStub(channel);
-    }
+    @GrpcClient("hospital-service")
+    private HospitalServiceBlockingStub blockingStub;
 
     public DoctorResponse createDoctor(String name, String email, String phone,
                                         String departmentId, String hospitalId) {
@@ -64,11 +54,5 @@ public class HospitalGrpcClient {
         return blockingStub.deleteDoctor(request);
     }
 
-    @PreDestroy
-    public void shutdown() {
-        log.info("Shutting down Hospital gRPC client");
-        if (channel != null && !channel.isShutdown()) {
-            channel.shutdown();
-        }
-    }
+
 }

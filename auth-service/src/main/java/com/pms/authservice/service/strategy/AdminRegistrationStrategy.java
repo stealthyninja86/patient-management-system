@@ -6,7 +6,7 @@ import com.pms.authservice.dto.response.AdminRegisterResponseDTO;
 import com.pms.authservice.model.Role;
 import com.pms.authservice.model.User;
 import com.pms.authservice.service.UserService;
-import com.pms.authservice.service.adapter.RegistrationEventPublisher;
+import com.pms.authservice.service.strategy.RegistrationEventPublisherStrategy;
 import com.pms.authservice.service.mapper.UserMapper;
 import com.pms.authservice.service.saga.RegistrationSaga;
 import org.slf4j.Logger;
@@ -22,11 +22,11 @@ public class AdminRegistrationStrategy implements RegistrationStrategy<AdminRegi
     private static final Logger log = LoggerFactory.getLogger(AdminRegistrationStrategy.class);
     private final UserService userService;
     private final UserMapper userMapper;
-    private final RegistrationEventPublisher eventPublisher;
+    private final RegistrationEventPublisherStrategy eventPublisher;
     private final ObjectProvider<RegistrationSaga> sagaProvider;
 
     public AdminRegistrationStrategy(UserService userService, UserMapper userMapper,
-                                     RegistrationEventPublisher eventPublisher,
+                                     RegistrationEventPublisherStrategy eventPublisher,
                                      ObjectProvider<RegistrationSaga> sagaProvider) {
         this.userService = userService;
         this.userMapper = userMapper;

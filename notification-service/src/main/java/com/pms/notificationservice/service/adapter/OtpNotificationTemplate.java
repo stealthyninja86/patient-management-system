@@ -3,7 +3,7 @@ package com.pms.notificationservice.service.adapter;
 import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.repository.NotificationRepository;
-import io.micrometer.core.instrument.Counter;
+import com.pms.notificationservice.service.metrics.MetricsService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,10 +14,9 @@ public class OtpNotificationTemplate extends NotificationTemplate {
     private static final String PHONE_PATTERN = "[6-9]\\d{9}";
 
     public OtpNotificationTemplate(NotificationRepository notificationRepository,
-                                   List<NotificationProvider> providers,
-                                   Counter notificationSentCounter,
-                                   Counter notificationFailedCounter) {
-        super(notificationRepository, providers, notificationSentCounter, notificationFailedCounter);
+                                    List<NotificationProvider> providers,
+                                    MetricsService metrics) {
+        super(notificationRepository, providers, metrics);
     }
 
     @Override

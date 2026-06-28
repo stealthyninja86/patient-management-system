@@ -7,15 +7,12 @@ import com.pms.authservice.dto.response.AdminRegisterResponseDTO;
 import com.pms.authservice.dto.response.DepartmentDTO;
 import com.pms.authservice.dto.response.DoctorRegisterResponseDTO;
 import com.pms.authservice.dto.response.HospitalDTO;
-import com.pms.authservice.dto.request.LoginRequestDTO;
-import com.pms.authservice.dto.response.LoginResponseDTO;
 import com.pms.authservice.dto.response.PatientRegisterResponseDTO;
 import com.pms.authservice.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,27 +26,6 @@ public class AuthController {
 
     public AuthController(AuthService authService) {
         this.authService = authService;
-    }
-
-    @Operation(summary = "Generate token on user login")
-    @PostMapping("/login")
-    ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
-        logger.info("Login attempt for email: {}", loginRequestDTO.email());
-        LoginResponseDTO response = authService.authenticate(loginRequestDTO);
-        logger.info("Login successful for email: {}", loginRequestDTO.email());
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "Validate token")
-    @GetMapping("/validate")
-    public ResponseEntity<Void> validateToken(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        logger.info("Validate token request");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        return authService.validateToken(authHeader.substring(7))
-                ? ResponseEntity.ok().build()
-                : ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(summary = "Get all hospitals")

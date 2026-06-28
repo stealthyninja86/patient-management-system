@@ -2,6 +2,7 @@ package com.pms.clinicalservice.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,17 +17,8 @@ import java.time.LocalDateTime;
 public class ScheduleGrpcClient {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduleGrpcClient.class);
-
-    private final ScheduleServiceGrpc.ScheduleServiceBlockingStub blockingStub;
-
-    public ScheduleGrpcClient(@Value("${schedule.service.address}") String host,
-                              @Value("${schedule.service.grpc.port}") int port) {
-        ManagedChannel channel = ManagedChannelBuilder
-                .forAddress(host, port)
-                .usePlaintext()
-                .build();
-        blockingStub = ScheduleServiceGrpc.newBlockingStub(channel);
-    }
+    @GrpcClient("schedule-service")
+    private ScheduleServiceGrpc.ScheduleServiceBlockingStub blockingStub;
 
     public OngoingAppointmentResult checkOngoingAppointment(String doctorId, String patientId) {
         log.debug("Checking ongoing appointment for doctor: {}, patient: {}", doctorId, patientId);

@@ -1,11 +1,11 @@
 package com.pms.clinicalservice.service;
 
-import com.pms.clinicalservice.dto.DoctorContactUpdateDTO;
-import com.pms.clinicalservice.dto.HospitalContactUpdateDTO;
-import com.pms.clinicalservice.dto.PatientContactUpdateDTO;
-import com.pms.clinicalservice.dto.PrescriptionResponseDTO;
+import com.pms.clinicalservice.dto.request.DoctorContactUpdateDTO;
+import com.pms.clinicalservice.dto.request.HospitalContactUpdateDTO;
+import com.pms.clinicalservice.dto.request.PatientContactUpdateDTO;
+import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.exception.PrescriptionNotFoundException;
-import com.pms.clinicalservice.service.factory.PrescriptionFactory;
+import com.pms.clinicalservice.service.mapper.PrescriptionMapper;
 import com.pms.clinicalservice.model.Prescription;
 import com.pms.clinicalservice.repository.PrescriptionRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -27,18 +27,18 @@ public class PrescriptionService {
     private static final Logger log = LoggerFactory.getLogger(PrescriptionService.class);
 
     private final PrescriptionRepository prescriptionRepository;
-    private final PrescriptionFactory prescriptionFactory;
+    private final PrescriptionMapper prescriptionMapper;
 
     public PrescriptionService(PrescriptionRepository prescriptionRepository,
-                               PrescriptionFactory prescriptionFactory) {
+                               PrescriptionMapper prescriptionMapper) {
         this.prescriptionRepository = prescriptionRepository;
-        this.prescriptionFactory = prescriptionFactory;
+        this.prescriptionMapper = prescriptionMapper;
     }
 
     public List<PrescriptionResponseDTO> getAllPrescriptions() {
         log.debug("Fetching all prescriptions");
         return prescriptionRepository.findAll().stream()
-                .map(prescriptionFactory::toPrescriptionResponseDTO)
+                .map(prescriptionMapper::toPrescriptionResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -46,20 +46,20 @@ public class PrescriptionService {
         log.debug("Fetching prescription by id: {}", prescriptionId);
         Prescription prescription = prescriptionRepository.findByPrescriptionId(prescriptionId)
                 .orElseThrow(() -> new PrescriptionNotFoundException("Prescription not found: " + prescriptionId));
-        return prescriptionFactory.toPrescriptionResponseDTO(prescription);
+        return prescriptionMapper.toPrescriptionResponseDTO(prescription);
     }
 
     public List<PrescriptionResponseDTO> getPrescriptionsByPatientId(String patientId) {
         log.debug("Fetching prescriptions by patient id: {}", patientId);
         return prescriptionRepository.findByPatientId(patientId).stream()
-                .map(prescriptionFactory::toPrescriptionResponseDTO)
+                .map(prescriptionMapper::toPrescriptionResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public List<PrescriptionResponseDTO> getPrescriptionsByDoctorId(String doctorId) {
         log.debug("Fetching prescriptions by doctor id: {}", doctorId);
         return prescriptionRepository.findByDoctorId(doctorId).stream()
-                .map(prescriptionFactory::toPrescriptionResponseDTO)
+                .map(prescriptionMapper::toPrescriptionResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -85,7 +85,7 @@ public class PrescriptionService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         return prescriptionRepository.findAll(spec).stream()
-                .map(prescriptionFactory::toPrescriptionResponseDTO)
+                .map(prescriptionMapper::toPrescriptionResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -101,7 +101,7 @@ public class PrescriptionService {
             prescription.setPatientEmail(update.patientEmail());
         }
         prescription = prescriptionRepository.save(prescription);
-        return prescriptionFactory.toPrescriptionResponseDTO(prescription);
+        return prescriptionMapper.toPrescriptionResponseDTO(prescription);
     }
 
     @Transactional
@@ -119,7 +119,7 @@ public class PrescriptionService {
             prescription.setHospitalWebsite(update.hospitalWebsite());
         }
         prescription = prescriptionRepository.save(prescription);
-        return prescriptionFactory.toPrescriptionResponseDTO(prescription);
+        return prescriptionMapper.toPrescriptionResponseDTO(prescription);
     }
 
     @Transactional
@@ -134,7 +134,7 @@ public class PrescriptionService {
             prescription.setDoctorEmail(update.doctorEmail());
         }
         prescription = prescriptionRepository.save(prescription);
-        return prescriptionFactory.toPrescriptionResponseDTO(prescription);
+        return prescriptionMapper.toPrescriptionResponseDTO(prescription);
     }
 
     @Transactional

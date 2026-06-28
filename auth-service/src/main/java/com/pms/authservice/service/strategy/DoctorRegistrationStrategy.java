@@ -7,7 +7,7 @@ import com.pms.authservice.grpc.HospitalGrpcClient;
 import com.pms.authservice.model.Role;
 import com.pms.authservice.model.User;
 import com.pms.authservice.service.UserService;
-import com.pms.authservice.service.adapter.RegistrationEventPublisher;
+import com.pms.authservice.service.strategy.RegistrationEventPublisherStrategy;
 import com.pms.authservice.service.mapper.UserMapper;
 import com.pms.authservice.service.saga.RegistrationSaga;
 import hospital.DoctorResponse;
@@ -26,12 +26,12 @@ public class DoctorRegistrationStrategy implements RegistrationStrategy<DoctorRe
     private final HospitalGrpcClient hospitalGrpcClient;
     private final UserService userService;
     private final UserMapper userMapper;
-    private final RegistrationEventPublisher eventPublisher;
+    private final RegistrationEventPublisherStrategy eventPublisher;
     private final ObjectProvider<RegistrationSaga> sagaProvider;
 
     public DoctorRegistrationStrategy(HospitalGrpcClient hospitalGrpcClient,
                                       UserService userService, UserMapper userMapper,
-                                      RegistrationEventPublisher eventPublisher,
+                                      RegistrationEventPublisherStrategy eventPublisher,
                                       ObjectProvider<RegistrationSaga> sagaProvider) {
         this.hospitalGrpcClient = hospitalGrpcClient;
         this.userService = userService;

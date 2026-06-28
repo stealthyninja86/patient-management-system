@@ -7,9 +7,9 @@ import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.model.Otp;
 import com.pms.notificationservice.model.OtpStatus;
 import com.pms.notificationservice.repository.OtpRepository;
-import com.pms.notificationservice.service.factory.OtpFactory;
+import com.pms.notificationservice.service.factory.OtpCreator;
+import com.pms.notificationservice.service.metrics.MetricsService;
 import com.pms.notificationservice.service.strategy.ChannelRouter;
-import io.micrometer.core.instrument.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -36,28 +36,22 @@ public class OtpService {
     private final OtpNotificationTemplate otpNotificationTemplate;
     private final ChannelRouter channelRouter;
     private final SecureRandom secureRandom;
-    private final Counter otpGeneratedCounter;
-    private final Counter otpVerifiedCounter;
-    private final Counter otpFailedCounter;
-    private final OtpFactory otpFactory;
+    private final MetricsService metrics;
+    private final OtpCreator otpFactory;
 
     public OtpService(OtpRepository otpRepository,
                       StringRedisTemplate redisTemplate,
                       OtpNotificationTemplate otpNotificationTemplate,
                       ChannelRouter channelRouter,
                       SecureRandom secureRandom,
-                      Counter otpGeneratedCounter,
-                      Counter otpVerifiedCounter,
-                      Counter otpFailedCounter,
-                      OtpFactory otpFactory) {
+                      MetricsService metrics,
+                      OtpCreator otpFactory) {
         this.otpRepository = otpRepository;
         this.redisTemplate = redisTemplate;
         this.otpNotificationTemplate = otpNotificationTemplate;
         this.channelRouter = channelRouter;
         this.secureRandom = secureRandom;
-        this.otpGeneratedCounter = otpGeneratedCounter;
-        this.otpVerifiedCounter = otpVerifiedCounter;
-        this.otpFailedCounter = otpFailedCounter;
+        this.metrics = metrics;
         this.otpFactory = otpFactory;
     }
 
@@ -85,7 +79,7 @@ public class OtpService {
                 phoneNumber, Instant.now().plusSeconds(OTP_TTL_SECONDS));
         String code =  String.format("%06d", secureRandom.nextInt(1_000_000));
         otpRepository.save(otp);
-        otpGeneratedCounter.increment();
+            metrics.recordOtpGenerated();
 
         String redisKey = REDIS_KEY_PREFIX + otp.getId().toString();
         redisTemplate.opsForValue().set(redisKey, code, OTP_TTL_SECONDS, TimeUnit.SECONDS);
@@ -139,7 +133,7 @@ public class OtpService {
             return handleMismatch(otpId);
         }
 
-        otpVerifiedCounter.increment();
+            metrics.recordOtpVerified();
         return updateStatus(otpId, OtpStatus.VERIFIED);
     }
 
@@ -185,7 +179,7 @@ public class OtpService {
             otp.setVerifiedAt(Instant.now());
         }
         else if (newStatus == OtpStatus.EXPIRED || newStatus == OtpStatus.LOCKED) {
-            otpFailedCounter.increment();
+            metrics.recordOtpFailed();
         }
 
         //Remove from Redis cache if terminal

@@ -1,14 +1,15 @@
 package com.pms.clinicalservice.service.facade;
 
-import com.pms.clinicalservice.dto.PrescriptionRequestDTO;
-import com.pms.clinicalservice.dto.PrescriptionResponseDTO;
+import com.pms.clinicalservice.dto.event.UnverifiedAlertEvent;
+import com.pms.clinicalservice.dto.event.VerifiedAlertEvent;
+import com.pms.clinicalservice.dto.request.Claim;
+import com.pms.clinicalservice.dto.request.PrescriptionRequestDTO;
+import com.pms.clinicalservice.dto.response.AISummaryResponse;
+import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.exception.*;
-import com.pms.clinicalservice.service.factory.PrescriptionFactory;
-import com.pms.clinicalservice.grpc.HospitalGrpcClient;
-import com.pms.clinicalservice.grpc.PatientGrpcClient;
-import com.pms.clinicalservice.grpc.ScheduleGrpcClient;
-import com.pms.clinicalservice.grpc.ScheduleGrpcClient.OngoingAppointmentResult;
+import com.pms.clinicalservice.dto.event.ContradictionAlertEvent;
 import com.pms.clinicalservice.kafka.PrescriptionPdfTaskEvent;
+import com.pms.clinicalservice.model.Confidence;
 import com.pms.clinicalservice.model.DocumentStatus;
 import com.pms.clinicalservice.model.Drug;
 import com.pms.clinicalservice.model.Prescription;
@@ -16,8 +17,15 @@ import com.pms.clinicalservice.model.PrescriptionDocument;
 import com.pms.clinicalservice.repository.PrescriptionDocumentRepository;
 import com.pms.clinicalservice.repository.PrescriptionRepository;
 import com.pms.clinicalservice.service.PrescriptionService;
+import com.pms.clinicalservice.service.ai.ClinicalAIService;
+import com.pms.clinicalservice.service.mapper.PrescriptionMapper;
+import com.pms.clinicalservice.service.search.SearXNGSearchClient;
 import com.pms.clinicalservice.service.storage.StorageService;
-import com.pms.clinicalservice.util.IdGenerator;
+import com.pms.clinicalservice.service.util.IdGenerator;
+import com.pms.clinicalservice.grpc.HospitalGrpcClient;
+import com.pms.clinicalservice.grpc.PatientGrpcClient;
+import com.pms.clinicalservice.grpc.ScheduleGrpcClient;
+import com.pms.clinicalservice.grpc.ScheduleGrpcClient.OngoingAppointmentResult;
 import hospital.DepartmentResponse;
 import hospital.DoctorResponse;
 import hospital.HospitalResponse;
@@ -44,7 +52,7 @@ public class PrescriptionFacade {
     private static final Logger log = LoggerFactory.getLogger(PrescriptionFacade.class);
 
     private final PrescriptionService prescriptionService;
-    private final PrescriptionFactory prescriptionFactory;
+    private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionRepository prescriptionRepository;
     private final ScheduleGrpcClient scheduleGrpcClient;
     private final HospitalGrpcClient hospitalGrpcClient;
@@ -53,9 +61,11 @@ public class PrescriptionFacade {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PrescriptionDocumentRepository prescriptionDocumentRepository;
     private final StorageService storageService;
+    private final ClinicalAIService clinicalAIService;
+    private final SearXNGSearchClient searXNGSearchClient;
 
     public PrescriptionFacade(PrescriptionService prescriptionService,
-                              PrescriptionFactory prescriptionFactory,
+                              PrescriptionMapper prescriptionMapper,
                               PrescriptionRepository prescriptionRepository,
                               ScheduleGrpcClient scheduleGrpcClient,
                               HospitalGrpcClient hospitalGrpcClient,
@@ -63,9 +73,11 @@ public class PrescriptionFacade {
                               IdGenerator idGenerator,
                               KafkaTemplate<String, Object> kafkaTemplate,
                               PrescriptionDocumentRepository prescriptionDocumentRepository,
-                              StorageService storageService) {
+                              StorageService storageService,
+                              ClinicalAIService clinicalAIService,
+                               SearXNGSearchClient searXNGSearchClient) {
         this.prescriptionService = prescriptionService;
-        this.prescriptionFactory = prescriptionFactory;
+        this.prescriptionMapper = prescriptionMapper;
         this.prescriptionRepository = prescriptionRepository;
         this.scheduleGrpcClient = scheduleGrpcClient;
         this.hospitalGrpcClient = hospitalGrpcClient;
@@ -74,6 +86,8 @@ public class PrescriptionFacade {
         this.kafkaTemplate = kafkaTemplate;
         this.prescriptionDocumentRepository = prescriptionDocumentRepository;
         this.storageService = storageService;
+        this.clinicalAIService = clinicalAIService;
+        this.searXNGSearchClient = searXNGSearchClient;
     }
 
     @Transactional
@@ -82,7 +96,7 @@ public class PrescriptionFacade {
             Optional<Prescription> existing = prescriptionRepository.findByIdempotencyKey(request.idempotencyKey());
             if (existing.isPresent()) {
                 log.info("Idempotency hit for key: {}, returning existing prescription: {}", request.idempotencyKey(), existing.get().getPrescriptionId());
-                return prescriptionFactory.toPrescriptionResponseDTO(existing.get());
+                return prescriptionMapper.toPrescriptionResponseDTO(existing.get());
             }
         }
 
@@ -127,7 +141,7 @@ public class PrescriptionFacade {
                 ? request.drugs().stream()
                     .map(drugInput -> {
                         String drugId = idGenerator.nextId("DRG-", "drug_id_seq");
-                        return prescriptionFactory.toDrugEntity(drugInput, drugId);
+                        return prescriptionMapper.toDrugEntity(drugInput, drugId);
                     })
                     .collect(Collectors.toList())
                 : List.of();
@@ -136,7 +150,7 @@ public class PrescriptionFacade {
                 ? appointmentResult.appointmentTime()
                 : LocalDateTime.now();
 
-        Prescription prescription = prescriptionFactory.toPrescriptionEntity(
+        Prescription prescription = prescriptionMapper.toPrescriptionEntity(
                 request, doctorId, doctorResponse, deptResponse, hospitalResponse, patientResponse,
                 drugs, consultationDate);
         prescription.setPrescriptionId(prescriptionId);
@@ -148,7 +162,7 @@ public class PrescriptionFacade {
                 Optional<Prescription> existing = prescriptionRepository.findByIdempotencyKey(request.idempotencyKey());
                 if (existing.isPresent()) {
                     log.warn("Race condition: idempotency key {} already persisted, returning existing", request.idempotencyKey());
-                    return prescriptionFactory.toPrescriptionResponseDTO(existing.get());
+                    return prescriptionMapper.toPrescriptionResponseDTO(existing.get());
                 }
             }
             throw e;
@@ -156,7 +170,7 @@ public class PrescriptionFacade {
 
         enqueuePdfGeneration(prescriptionId);
 
-        return prescriptionFactory.toPrescriptionResponseDTO(prescription);
+        return prescriptionMapper.toPrescriptionResponseDTO(prescription);
     }
 
     @CircuitBreaker(name = "scheduleService", fallbackMethod = "checkAppointmentFallback")
@@ -212,5 +226,24 @@ public class PrescriptionFacade {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("pdf generation failed. Please retry via POST");
         }
+    }
+
+    public AISummaryResponse generatePrescriptionSummary(String prescriptionId, String promptKey) {
+        PrescriptionResponseDTO dto = prescriptionService.getPrescriptionById(prescriptionId);
+
+        List<String> queries = clinicalAIService.buildQueries(promptKey, dto);
+        String webContext = searXNGSearchClient.fetchContext(queries);
+
+        String summary = clinicalAIService.generateSummary(promptKey, dto, webContext);
+
+        String verification = clinicalAIService.generateVerficationMessage(summary, webContext, prescriptionId);
+
+        String disclaimer = "This information was generated by AI and may not be fully accurate. Always consult your healthcare provider for medical advice.";
+
+        return new AISummaryResponse(summary, verification, disclaimer);
+    }
+
+    public List<String> getAvailablePrompts() {
+        return clinicalAIService.getAvailablePrompts();
     }
 }

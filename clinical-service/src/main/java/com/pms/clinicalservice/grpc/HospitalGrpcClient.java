@@ -9,6 +9,7 @@ import hospital.HospitalResponse;
 import hospital.HospitalServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,17 +20,8 @@ public class HospitalGrpcClient {
 
     private static final Logger log = LoggerFactory.getLogger(HospitalGrpcClient.class);
 
-    private final HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
-
-    public HospitalGrpcClient(
-            @Value("${hospital.service.address}") String host,
-            @Value("${hospital.service.grpc.port}") int port) {
-        ManagedChannel channel = ManagedChannelBuilder
-                .forAddress(host, port)
-                .usePlaintext()
-                .build();
-        blockingStub = HospitalServiceGrpc.newBlockingStub(channel);
-    }
+    @GrpcClient("hospital-service")
+    private HospitalServiceGrpc.HospitalServiceBlockingStub blockingStub;
 
     public DoctorResponse getDoctorById(String doctorId) {
         log.debug("Fetching doctor by id: {}", doctorId);

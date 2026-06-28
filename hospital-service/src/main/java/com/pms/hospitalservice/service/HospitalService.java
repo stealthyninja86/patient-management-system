@@ -6,9 +6,9 @@ import com.pms.hospitalservice.dto.request.HospitalRequestDTO;
 import com.pms.hospitalservice.dto.response.HospitalResponseDTO;
 import com.pms.hospitalservice.exception.HospitalNotFoundException;
 import com.pms.hospitalservice.dto.request.DoctorRequestDTO;
-import com.pms.hospitalservice.service.factory.DepartmentFactory;
-import com.pms.hospitalservice.service.factory.DoctorFactory;
-import com.pms.hospitalservice.service.factory.HospitalFactory;
+import com.pms.hospitalservice.service.mapper.DepartmentMapper;
+import com.pms.hospitalservice.service.mapper.DoctorMapper;
+import com.pms.hospitalservice.service.mapper.HospitalMapper;
 import com.pms.hospitalservice.model.Department;
 import com.pms.hospitalservice.model.Doctor;
 import com.pms.hospitalservice.model.Hospital;
@@ -39,7 +39,7 @@ public class HospitalService {
     @Transactional
     public HospitalResponseDTO createHospital(HospitalRequestDTO dto) {
         log.debug("Creating hospital");
-        Hospital hospital = HospitalFactory.createEntity(dto);
+        Hospital hospital = HospitalMapper.createEntity(dto);
         String id = idGenerator.nextId("HMC", "hospital_seq");
         hospital.setHospitalId(id);
 
@@ -49,12 +49,12 @@ public class HospitalService {
                 List<Doctor> doctors = new ArrayList<>();
                 if (deptDto.doctors() != null) {
                     for (DoctorRequestDTO docDto : deptDto.doctors()) {
-                        Doctor doctor = DoctorFactory.createEntity(docDto);
+                        Doctor doctor = DoctorMapper.createEntity(docDto);
                         doctor.setDoctorId(idGenerator.nextId("DOC", "doctor_seq"));
                         doctors.add(doctor);
                     }
                 }
-                Department department = DepartmentFactory.createEntity(
+                Department department = DepartmentMapper.createEntity(
                         idGenerator.nextId("DEP", "department_seq"),
                         hospital,
                         deptDto.name(),
@@ -71,10 +71,10 @@ public class HospitalService {
         hospital = hospitalRepository.save(hospital);
         List<DepartmentResponseDTO> deptDTOs = hospital.getDepartmentList() != null
                 ? hospital.getDepartmentList().stream()
-                    .map(DepartmentFactory::toResponseDTO)
+                    .map(DepartmentMapper::toResponseDTO)
                     .collect(Collectors.toList())
                 : List.of();
-        return HospitalFactory.toResponseDTO(hospital, deptDTOs);
+        return HospitalMapper.toResponseDTO(hospital, deptDTOs);
     }
 
     public List<HospitalResponseDTO> getAllHospitals() {
@@ -83,10 +83,10 @@ public class HospitalService {
                 .map(hospital -> {
                     List<DepartmentResponseDTO> deptDTOs = hospital.getDepartmentList() != null
                             ? hospital.getDepartmentList().stream()
-                                .map(DepartmentFactory::toResponseDTO)
+                                .map(DepartmentMapper::toResponseDTO)
                                 .collect(Collectors.toList())
                             : List.of();
-                    return HospitalFactory.toResponseDTO(hospital, deptDTOs);
+                    return HospitalMapper.toResponseDTO(hospital, deptDTOs);
                 })
                 .collect(Collectors.toList());
     }
@@ -97,10 +97,10 @@ public class HospitalService {
                 .orElseThrow(() -> new HospitalNotFoundException("Hospital not found: " + hospitalId));
         List<DepartmentResponseDTO> deptDTOs = hospital.getDepartmentList() != null
                 ? hospital.getDepartmentList().stream()
-                    .map(DepartmentFactory::toResponseDTO)
+                    .map(DepartmentMapper::toResponseDTO)
                     .collect(Collectors.toList())
                 : List.of();
-        return HospitalFactory.toResponseDTO(hospital, deptDTOs);
+        return HospitalMapper.toResponseDTO(hospital, deptDTOs);
     }
 
     @Transactional
@@ -108,9 +108,9 @@ public class HospitalService {
         log.debug("Updating hospital: {}", hospitalId);
         Hospital hospital = hospitalRepository.findByHospitalId(hospitalId)
                 .orElseThrow(() -> new HospitalNotFoundException("Hospital not found: " + hospitalId));
-        HospitalFactory.updateEntity(hospital, dto);
+        HospitalMapper.updateEntity(hospital, dto);
         hospital = hospitalRepository.save(hospital);
-        return HospitalFactory.toResponseDTO(hospital);
+        return HospitalMapper.toResponseDTO(hospital);
     }
 
     @Transactional

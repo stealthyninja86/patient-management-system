@@ -6,8 +6,8 @@ import com.pms.notificationservice.model.Notification;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationStatus;
 import com.pms.notificationservice.repository.NotificationRepository;
-import com.pms.notificationservice.service.factory.NotificationFactory;
-import io.micrometer.core.instrument.Counter;
+import com.pms.notificationservice.service.mapper.NotificationMapper;
+import com.pms.notificationservice.service.metrics.MetricsService;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,27 +39,18 @@ public class NotificationService {
     private final StringRedisTemplate redisTemplate;
     private final List<NotificationProvider> providers;
     private final Map<NotificationChannel, NotificationProvider> providerMap = new EnumMap<>(NotificationChannel.class);
-    private final Counter notificationSentCounter;
-    private final Counter notificationFailedCounter;
-    private final Counter dedupHitCounter;
-    private final Counter dedupMissCounter;
-    private final NotificationFactory notificationFactory;
+    private final MetricsService metrics;
+    private final NotificationMapper notificationFactory;
 
     public NotificationService(NotificationRepository notificationRepository,
                                StringRedisTemplate redisTemplate,
                                List<NotificationProvider> providers,
-                               Counter notificationSentCounter,
-                               Counter notificationFailedCounter,
-                               Counter dedupHitCounter,
-                               Counter dedupMissCounter,
-                               NotificationFactory notificationFactory) {
+                               MetricsService metrics,
+                               NotificationMapper notificationFactory) {
         this.notificationRepository = notificationRepository;
         this.redisTemplate = redisTemplate;
         this.providers = providers;
-        this.notificationSentCounter = notificationSentCounter;
-        this.notificationFailedCounter = notificationFailedCounter;
-        this.dedupHitCounter = dedupHitCounter;
-        this.dedupMissCounter = dedupMissCounter;
+        this.metrics = metrics;
         this.notificationFactory = notificationFactory;
     }
 
@@ -94,11 +85,11 @@ public class NotificationService {
 
         if(Boolean.FALSE.equals(wasSet)){
             log.info("Duplicate notification suppressed: eventId={}, channel={}", notificationRequest.eventId(), notificationRequest.channel());
-            dedupHitCounter.increment();
+            metrics.recordDedupHit();
             return false;
         }
 
-        dedupMissCounter.increment();
+        metrics.recordDedupMiss();
 
         //create notification record
         Notification notification = notificationFactory.createNotification(notificationRequest);
@@ -112,7 +103,7 @@ public class NotificationService {
                 );
             }
             provider.send(notificationRequest);
-            notificationSentCounter.increment();
+            metrics.recordNotificationSent(notificationRequest.channel().name());
             //mark as sent
             log.info("Notification sent for patientId: {}, with message: {}", notificationRequest.patientId(), notificationRequest.message());
             notification.setStatus(NotificationStatus.SENT);
@@ -138,7 +129,7 @@ public class NotificationService {
      */
     @Recover
     public boolean recover(Exception e, NotificationRequest notificationRequest){
-        notificationFailedCounter.increment();
+        metrics.recordNotificationFailed(notificationRequest.channel().name());
         log.error("All notification retries exhausted: eventId={}, channel={}, error={}", notificationRequest.eventId(), notificationRequest.channel(), e.getMessage());
         return false;
     }

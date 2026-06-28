@@ -4,7 +4,7 @@ import com.pms.hospitalservice.dto.request.DoctorRequestDTO;
 import com.pms.hospitalservice.dto.response.DoctorResponseDTO;
 import com.pms.hospitalservice.exception.DepartmentNotFoundException;
 import com.pms.hospitalservice.exception.DoctorNotFoundException;
-import com.pms.hospitalservice.service.factory.DoctorFactory;
+import com.pms.hospitalservice.service.mapper.DoctorMapper;
 import com.pms.hospitalservice.model.Department;
 import com.pms.hospitalservice.model.Doctor;
 import com.pms.hospitalservice.repository.DepartmentRepository;
@@ -60,7 +60,7 @@ public class DoctorService {
     public List<DoctorResponseDTO> getAllDoctors() {
         log.debug("Fetching all doctors");
         return doctorRepository.findAll().stream()
-                .map(DoctorFactory::toResponseDTO)
+                .map(DoctorMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -68,31 +68,31 @@ public class DoctorService {
         log.debug("Fetching doctor by id: {}", id);
         Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found: " + id));
-        return DoctorFactory.toResponseDTO(doctor);
+        return DoctorMapper.toResponseDTO(doctor);
     }
 
     public DoctorResponseDTO getDoctorByDoctorId(String doctorId) {
         log.debug("Fetching doctor by doctorId: {}", doctorId);
         Doctor doctor = doctorRepository.findByDoctorId(doctorId)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found: " + doctorId));
-        return DoctorFactory.toResponseDTO(doctor);
+        return DoctorMapper.toResponseDTO(doctor);
     }
 
     public List<DoctorResponseDTO> getDoctorsByDepartment(String departmentId) {
         log.debug("Fetching doctors by department: {}", departmentId);
         return doctorRepository.findByDepartment_DepartmentId(departmentId).stream()
-                .map(DoctorFactory::toResponseDTO)
+                .map(DoctorMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public DoctorResponseDTO createDoctor(DoctorRequestDTO dto) {
         log.debug("Creating doctor");
-        Doctor doctor = DoctorFactory.createEntity(dto);
+        Doctor doctor = DoctorMapper.createEntity(dto);
         doctor.setDepartment(getDepartmentFromDoctor(dto));
         doctor.setDoctorId(idGenerator.nextId("DOC", "doctor_seq"));
         doctor = doctorRepository.save(doctor);
-        return DoctorFactory.toResponseDTO(doctor);
+        return DoctorMapper.toResponseDTO(doctor);
     }
 
     @Transactional
@@ -100,9 +100,9 @@ public class DoctorService {
         log.debug("Updating doctor: {}", id);
         Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found: " + id));
-        DoctorFactory.updateEntity(doctor, dto, getDepartmentFromDoctor(dto));
+        DoctorMapper.updateEntity(doctor, dto, getDepartmentFromDoctor(dto));
         doctor = doctorRepository.save(doctor);
-        return DoctorFactory.toResponseDTO(doctor);
+        return DoctorMapper.toResponseDTO(doctor);
     }
 
     @Transactional

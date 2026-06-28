@@ -5,7 +5,7 @@ import com.pms.notificationservice.model.Notification;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationStatus;
 import com.pms.notificationservice.repository.NotificationRepository;
-import io.micrometer.core.instrument.Counter;
+import com.pms.notificationservice.service.metrics.MetricsService;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,17 +21,14 @@ public abstract class NotificationTemplate {
     private final NotificationRepository notificationRepository;
     private final List<NotificationProvider> providers;
     private final Map<NotificationChannel, NotificationProvider> providerMap = new EnumMap<>(NotificationChannel.class);
-    private final Counter notificationSentCounter;
-    private final Counter notificationFailedCounter;
+    protected final MetricsService metrics;
 
     public NotificationTemplate(NotificationRepository notificationRepository,
                                  List<NotificationProvider> providers,
-                                 Counter notificationSentCounter,
-                                 Counter notificationFailedCounter) {
+                                 MetricsService metrics) {
         this.notificationRepository = notificationRepository;
         this.providers = providers;
-        this.notificationSentCounter = notificationSentCounter;
-        this.notificationFailedCounter = notificationFailedCounter;
+        this.metrics = metrics;
     }
 
     @PostConstruct
@@ -70,7 +67,7 @@ public abstract class NotificationTemplate {
 
                 log.info("Sending notification (attempt {}/{}): {}", attempt, maxAttempts, notification.getRecipient());
                 provider.send(request);
-                notificationSentCounter.increment();
+                metrics.recordNotificationSent(request.channel().name());
 
                 notification.setStatus(NotificationStatus.SENT);
                 notification.setSentAt(LocalDateTime.now());
@@ -98,7 +95,7 @@ public abstract class NotificationTemplate {
         }
 
         notification.setStatus(NotificationStatus.FAILED);
-        notificationFailedCounter.increment();
+        metrics.recordNotificationFailed(request.channel().name());
         notification.setErrorMessage(lastException.getMessage());
         notification.setRetryCount(maxAttempts - 1);
         notificationRepository.save(notification);
