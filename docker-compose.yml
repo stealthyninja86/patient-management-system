@@ -21,6 +21,37 @@ services:
     networks:
       - internal
 
+  # AKHQ — Kafka Web UI
+  akhq:
+    image: tchiotludo/akhq:latest
+    container_name: akhq
+    ports:
+      - "8080:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            kafka:
+              properties:
+                bootstrap.servers: "kafka:9092"
+    depends_on:
+      - kafka
+    networks:
+      - internal
+
+  # kafka-exporter — Kafka metrics for Prometheus/Grafana
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka-exporter
+    ports:
+      - "9308:9308"
+    command:
+      - --kafka.server=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - internal
+
   # Redis (shared — OTP TTLs, dedup keys, rate limit counters)
   redis:
     image: redis:7-alpine
@@ -293,12 +324,21 @@ services:
       - "4010:4010"
     volumes:
       - ./clinical-service/pdf-storage:/app/pdf-storage
+    entrypoint:
+      - sh
+      - -c
+      - |
+        export OPENAI_API_KEY=$(cat /run/secrets/openai_api_key)
+        exec java -jar app.jar
+    secrets:
+      - openai_api_key
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://clinical-service-db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SQL_INIT_MODE: always
+      SPRING_DATA_REDIS_HOST: redis
     depends_on:
       clinical-service-db:
         condition: service_healthy
@@ -306,6 +346,27 @@ services:
       driver: gelf
       options:
         gelf-address: "udp://logstash:5000"
+    networks:
+      - internal
+
+  # SearXNG (privacy-respecting metasearch engine)
+  searxng:
+    image: searxng:latest
+    container_name: searxng
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./clinical-service/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-data:/var/cache/searxng
+    environment:
+      - SEARXNG_BASE_URL=http://searxng:8080
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    tmpfs:
+      - /etc/searxng:uid=977,gid=977
+    restart: unless-stopped
     networks:
       - internal
 
@@ -496,7 +557,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
@@ -511,12 +572,12 @@ services:
     image: logstash:8.14.0
     container_name: logstash
     ports:
-      - "5000:5000"
-      - "5000:5000/udp"
+      - "5005:5000"
+      - "5005:5000/udp"
     volumes:
-      - ./logstash/pipeline:/usr/share/logstash/pipeling
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
     environment:
-      - LS_JAVA_OPTS=-Xms512m -Xmx512
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -535,10 +596,15 @@ services:
     networks:
       - internal
 
+secrets:
+  openai_api_key:
+    file: ./secrets/ollama_api_key.txt
+
 volumes:
   grafana_data:
   prometheus_data:
   elasticsearch_data:
+  searxng-data:
 
 networks:
   internal:

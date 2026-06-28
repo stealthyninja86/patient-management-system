@@ -1,9 +1,7 @@
 package com.pms.clinicalservice.controller;
 
-import com.pms.clinicalservice.dto.request.DoctorContactUpdateDTO;
-import com.pms.clinicalservice.dto.request.HospitalContactUpdateDTO;
-import com.pms.clinicalservice.dto.request.PatientContactUpdateDTO;
-import com.pms.clinicalservice.dto.request.PrescriptionRequestDTO;
+import com.pms.clinicalservice.dto.request.*;
+import com.pms.clinicalservice.dto.response.AISummaryResponse;
 import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.service.facade.PrescriptionFacade;
 import com.pms.clinicalservice.service.PrescriptionService;
@@ -23,9 +21,9 @@ import java.util.List;
 @RequestMapping("/prescriptions")
 public class PrescriptionController {
 
+    private final Logger logger = LoggerFactory.getLogger(PrescriptionController.class);
     private final PrescriptionFacade prescriptionFacade;
     private final PrescriptionService prescriptionService;
-    private final Logger logger = LoggerFactory.getLogger(PrescriptionController.class);
 
     public PrescriptionController(PrescriptionFacade prescriptionFacade,
                                   PrescriptionService prescriptionService) {
@@ -129,4 +127,24 @@ public class PrescriptionController {
         logger.info("Getting prescription pdf for id: {}", id);
         return prescriptionFacade.getPrescriptionPdf(id);
     }
+
+    @GetMapping("/ai/prompts")
+    public ResponseEntity<List<String>> getPrompts() {
+        logger.info("Getting prompts for prescriptions");
+        List<String> prompts = prescriptionFacade.getAvailablePrompts();
+        return ResponseEntity.ok(prompts);
+    }
+
+    @PostMapping("/ai/chat")
+    public ResponseEntity<AISummaryResponse> chat(
+            @RequestBody AISummaryRequest request
+            ){
+        if(request.promptKey() == null || request.promptKey().isEmpty()){
+            return ResponseEntity.badRequest()
+                    .body(new AISummaryResponse("Prompt is required", null, null));
+        }
+        AISummaryResponse response = prescriptionFacade.generatePrescriptionSummary(request.prescriptionId(), request.promptKey());
+        return ResponseEntity.ok(response);
+    }
+
 }

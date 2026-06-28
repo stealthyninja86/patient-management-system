@@ -27,6 +27,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/prescriptions/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/prescriptions/*/contact/**").hasAnyRole("ADMIN", "DOCTOR")
                 .requestMatchers(HttpMethod.POST, "/prescriptions/*/pdf").hasRole("DOCTOR")
+                    .requestMatchers(HttpMethod.GET, "/prescriptions/ai/prompts").hasAnyRole("DOCTOR", "ADMIN", "PATIENT")
+                    .requestMatchers(HttpMethod.POST, "/prescriptions/ai/chat").hasAnyRole("DOCTOR", "ADMIN", "PATIENT")
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
