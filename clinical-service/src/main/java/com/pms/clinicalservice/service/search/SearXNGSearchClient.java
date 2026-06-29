@@ -1,5 +1,6 @@
 package com.pms.clinicalservice.service.search;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ public class SearXNGSearchClient {
                 .build();
     }
 
+    @CircuitBreaker(name = "searxngClient", fallbackMethod = "searchFallback")
     public String fetchContext(List<String> queries) {
         if (queries == null || queries.isEmpty()) return "";
 
@@ -30,6 +32,11 @@ public class SearXNGSearchClient {
                 .map(this::search)
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.joining("\n---\n"));
+    }
+
+    public String searchFallback(List<String> queries, Throwable t) {
+        log.warn("SearXNG search unavailable: {}. Returning empty context.", t.getMessage());
+        return "";
     }
 
     private String search(String query) {

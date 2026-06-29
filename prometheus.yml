@@ -1,0 +1,66 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:4004']
+        labels:
+          application: 'api-gateway'
+
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['auth-service:4005']
+        labels:
+          application: 'auth-service'
+
+  - job_name: 'patient-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['patient-service:4000']
+        labels:
+          application: 'patient-service'
+
+  - job_name: 'hospital-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['hospital-service:4003']
+        labels:
+          application: 'hospital-service'
+
+  - job_name: 'schedule-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['schedule-service:4009']
+        labels:
+          application: 'schedule-service'
+
+  - job_name: 'clinical-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['clinical-service:4010']
+        labels:
+          application: 'clinical-service'
+
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['notification-service:4014']
+        labels:
+          application: 'notification-service'
+
+  - job_name: 'analytics-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['analytics-service:4002']
+        labels:
+          application: 'analytics-service'
+
+  - job_name: 'kafka-exporter'
+    static_configs:
+      - targets: ['kafka-exporter:9308']
+        labels:
+          application: 'kafka'

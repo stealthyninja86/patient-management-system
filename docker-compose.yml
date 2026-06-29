@@ -351,7 +351,7 @@ services:
 
   # SearXNG (privacy-respecting metasearch engine)
   searxng:
-    image: searxng:latest
+    image: searxng/searxng:latest
     container_name: searxng
     ports:
       - "8888:8080"

@@ -7,6 +7,7 @@ import com.pms.clinicalservice.dto.request.Claim;
 import com.pms.clinicalservice.dto.response.DrugResponseDTO;
 import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.model.Confidence;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -258,6 +259,7 @@ public class ClinicalAIService {
         return queries;
     }
 
+    @CircuitBreaker(name = "aiService", fallbackMethod = "summaryFallback")
     @Cacheable(value = "aiSummaries", key = "#dto.prescriptionId() + '-' + #promptKey + '-' + T(com.pms.clinicalservice.service.ai.ClinicalAIService).templateVersion()")
     public String generateSummary(String promptKey, PrescriptionResponseDTO dto, String webContext) {
         String template = PROMPT_TEMPLATES.get(promptKey);
@@ -298,6 +300,12 @@ public class ClinicalAIService {
         return response;
     }
 
+    public String summaryFallback(String promptKey, PrescriptionResponseDTO dto, String webContext, Throwable t) {
+        logger.warn("AI summarization unavailable: {}", t.getMessage());
+        return "AI summarization is temporarily unavailable. Prescription data shown without AI analysis.";
+    }
+
+    @CircuitBreaker(name = "aiService", fallbackMethod = "validationFallback")
     public List<Claim> validate(String summary, String webContext) {
         if (webContext.isBlank()) {
             return List.of();
@@ -314,6 +322,11 @@ public class ClinicalAIService {
                 .content();
 
         return parseClaims(response);
+    }
+
+    public List<Claim> validationFallback(String summary, String webContext, Throwable t) {
+        logger.warn("AI validation unavailable: {}", t.getMessage());
+        return List.of(new Claim("AI validation unavailable", Confidence.UNVERIFIED));
     }
 
     public String generateVerficationMessage(String summary, String webContext, String prescriptionId) {
