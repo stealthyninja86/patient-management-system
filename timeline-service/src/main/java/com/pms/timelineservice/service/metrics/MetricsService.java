@@ -17,7 +17,7 @@ public class MetricsService {
     }
 
     public void recordEventConsumed(String topic) {
-        Counter.builder("analytics.events.consumed")
+        Counter.builder("timeline.events.consumed")
                 .description("Kafka events consumed by topic")
                 .tag("topic", topic)
                 .register(meterRegistry)
@@ -25,7 +25,7 @@ public class MetricsService {
     }
 
     public void recordEventDeduped(String topic) {
-        Counter.builder("analytics.events.deduped")
+        Counter.builder("timeline.events.deduped")
                 .description("Duplicate events skipped by topic")
                 .tag("topic", topic)
                 .register(meterRegistry)
@@ -33,7 +33,7 @@ public class MetricsService {
     }
 
     public void recordAggregationDuration(String type, long millis) {
-        Timer.builder("analytics.aggregation.duration")
+        Timer.builder("timeline.aggregation.duration")
                 .description("Aggregation pipeline duration by type")
                 .tag("type", type)
                 .publishPercentiles(0.5, 0.95, 0.99)

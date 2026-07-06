@@ -13,7 +13,7 @@ public class ConsentGate {
     }
 
     public boolean hasConsent(String patientId, String hospitalId) {
-        String key = "consent" + patientId + ":" + hospitalId;
+        String key = "consent:" + patientId + ":" + hospitalId;
         return stringRedisTemplate.hasKey(key);
     }
 }

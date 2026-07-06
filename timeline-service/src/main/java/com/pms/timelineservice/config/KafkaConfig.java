@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pms.timelineservice.dto.event.AppointmentEvent;
 import com.pms.timelineservice.dto.event.ConsentGrantedEvent;
 import com.pms.timelineservice.dto.event.PrescriptionPdfGeneratedEvent;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,27 +91,6 @@ public class KafkaConfig {
             consentKafkaListenerContainerFactory(
                     ConsumerFactory<String, ConsentGrantedEvent> consumerFactory) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, ConsentGrantedEvent>();
-        factory.setConsumerFactory(consumerFactory);
-        factory.setCommonErrorHandler(errorHandler());
-        return factory;
-    }
-
-    // ── Patient events (Protobuf byte[]) ──
-
-    @Bean
-    public ConsumerFactory<String, byte[]> protobufConsumerFactory(
-            KafkaProperties properties) {
-        var config = properties.buildConsumerProperties(null);
-        return new DefaultKafkaConsumerFactory<>(
-                config,
-                new StringDeserializer(),
-                new ByteArrayDeserializer());
-    }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, byte[]> protobufKafkaListenerContainerFactory(
-            ConsumerFactory<String, byte[]> consumerFactory) {
-        var factory = new ConcurrentKafkaListenerContainerFactory<String, byte[]>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler());
         return factory;

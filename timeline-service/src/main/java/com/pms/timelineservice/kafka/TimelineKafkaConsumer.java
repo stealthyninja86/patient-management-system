@@ -28,8 +28,10 @@ public class TimelineKafkaConsumer {
         ingestionService.upsertEncounter(
                 event.patientId(),
                 event.appointmentId(),
-                event.hospitalName(),
+                event.doctorId(),
                 event.doctorName(),
+                event.hospitalId(),
+                event.hospitalName(),
                 event.status(),
                 event.startTime(),
                 event.endTime()

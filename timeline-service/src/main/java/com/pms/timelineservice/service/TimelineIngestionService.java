@@ -30,7 +30,8 @@ public class TimelineIngestionService {
     }
 
     public void upsertEncounter(String patientId, String appointmentId,
-                                String hospitalName, String doctorName,
+                                String doctorId, String doctorName,
+                                String hospitalId, String hospitalName,
                                 String appointmentStatus, String startTime,
                                 String endTime
     ){
@@ -40,7 +41,9 @@ public class TimelineIngestionService {
         Update update = new Update()
                 .set("entries.$[elem].appointmentId", appointmentId)
                 .set("entries.$[elem].appointmentStatus", appointmentStatus)
+                .set("entries.$[elem].doctorId", doctorId)
                 .set("entries.$[elem].doctorName", doctorName)
+                .set("entries.$[elem].hospitalId", hospitalId)
                 .set("entries.$[elem].hospitalName", hospitalName)
                 .set("entries.$[elem].startedAt", startTime)
                 .set("entries.$[elem].endedAt", endTime)
@@ -53,8 +56,10 @@ public class TimelineIngestionService {
             TimelineEntry entry = new  TimelineEntry();
             entry.setId(UUID.randomUUID().toString());
             entry.setAppointmentId(appointmentId);
-            entry.setHospitalName(hospitalName);
+            entry.setDoctorId(doctorId);
             entry.setDoctorName(doctorName);
+            entry.setHospitalId(hospitalId);
+            entry.setHospitalName(hospitalName);
             entry.setAppointmentStatus(appointmentStatus);
             entry.setStartedAt(Instant.parse(startTime));
             entry.setEndedAt(Instant.parse(endTime));

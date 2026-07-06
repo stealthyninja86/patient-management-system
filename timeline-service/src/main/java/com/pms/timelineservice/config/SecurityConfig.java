@@ -22,7 +22,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
-                    .requestMatchers("/api/timeline/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                    .requestMatchers("/timeline/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
                     .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
