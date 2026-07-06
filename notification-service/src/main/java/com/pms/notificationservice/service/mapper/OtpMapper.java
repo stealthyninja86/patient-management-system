@@ -16,6 +16,7 @@ public class OtpMapper {
                 case EXPIRED -> "OTP has expired. Please request a new one";
                 case LOCKED -> "Too many failed attempts. OTP is locked. Please request a new one";
                 case GENERATED -> "Incorrect code. Please try again";
+                case MISMATCH -> "Incorrect code. Please try again";
             }
         );
     }

@@ -20,6 +20,7 @@ public class Appointment {
     private String patientId;
 
     private String patientName;
+    private String patientPhone;
     private String patientEmail;
 
     private String doctorId;
@@ -44,7 +45,15 @@ public class Appointment {
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
-        if (status == null) status = AppointmentStatus.BOOKED;
+        if (status == null) status = AppointmentStatus.PENDING_OTP;
+    }
+
+    public String getPatientPhone() {
+        return patientPhone;
+    }
+
+    public void setPatientPhone(String patientPhone) {
+        this.patientPhone = patientPhone;
     }
 
     public UUID getId() {

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import patient.PatientResponse;
 
 import java.util.List;
 
@@ -85,11 +86,17 @@ public class AppointmentService {
                 .toList();
     }
 
+    public Appointment getAppointmentByIdEntity(String appointmentId) {
+        log.debug("Fetching appointment entity by id: {}", appointmentId);
+        return appointmentRepository.findByAppointmentId(appointmentId)
+                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
+    }
+
     @Transactional
-    public AppointmentResponseDTO createAppointment(AppointmentRequestDTO request) {
+    public Appointment createAppointmentEntity(AppointmentRequestDTO request) {
         log.info("Creating appointment for patient: {}, timeSlot: {}", request.patientId(), request.timeSlotId());
 
-        patient.PatientResponse patientResponse;
+        PatientResponse patientResponse;
         try {
             patientResponse = patientGrpcClient.getPatientById(request.patientId());
         } catch (Exception e) {
@@ -100,7 +107,7 @@ public class AppointmentService {
                 .orElseThrow(() -> new TimeSlotNotFoundException("TimeSlot not found: " + request.timeSlotId()));
 
         boolean slotBooked = appointmentRepository.findByTimeSlotIdAndStatusIn(request.timeSlotId(),
-                List.of(AppointmentStatus.BOOKED, AppointmentStatus.ONGOING)).isPresent();
+                List.of(AppointmentStatus.PENDING_OTP, AppointmentStatus.BOOKED, AppointmentStatus.ONGOING)).isPresent();
         if (slotBooked) {
             throw new TimeSlotNotAvailableException("TimeSlot is not available: " + request.timeSlotId());
         }
@@ -109,12 +116,11 @@ public class AppointmentService {
         Appointment appointment = appointmentMapper.toEntity(request, appointmentId, timeSlot);
         appointment.setPatientName(patientResponse.getName());
         appointment.setPatientEmail(patientResponse.getEmail());
+        appointment.setPatientPhone(patientResponse.getPhone());
+        appointment.setStatus(AppointmentStatus.PENDING_OTP);
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentBookedEvent(appointment, patientResponse,
-            timeSlot.getStartTime().toLocalDate().toString());
-
-        return appointmentMapper.toResponseDTO(appointment);
+        return appointment;
     }
 
     @Transactional
@@ -210,12 +216,25 @@ public class AppointmentService {
         return appointmentMapper.toResponseDTO(appointment);
     }
 
+    @Transactional
+    public void transitionStatus(String appointmentId, AppointmentStatus newStatus) {
+        log.debug("Transitioning appointment status: {} to {}", appointmentId, newStatus);
+        Appointment appointment = appointmentRepository.findByAppointmentId(appointmentId)
+                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
+
+        validateTransition(appointment.getStatus(), newStatus);
+
+        appointment.setStatus(newStatus);
+        appointmentRepository.save(appointment);
+    }
+
     private void validateTransition(AppointmentStatus current, AppointmentStatus next) {
         if (current == next) {
             throw new InvalidAppointmentOperationException(
                 "Appointment is already " + current.name().toLowerCase());
         }
         boolean valid = switch (current) {
+            case PENDING_OTP -> next == AppointmentStatus.BOOKED || next == AppointmentStatus.CANCELLED;
             case BOOKED -> next == AppointmentStatus.ONGOING || next == AppointmentStatus.CANCELLED;
             case ONGOING -> next == AppointmentStatus.COMPLETED || next == AppointmentStatus.CANCELLED;
             case COMPLETED, CANCELLED -> false;

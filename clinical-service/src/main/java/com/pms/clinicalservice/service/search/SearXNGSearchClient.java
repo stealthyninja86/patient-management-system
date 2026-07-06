@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -24,6 +25,7 @@ public class SearXNGSearchClient {
                 .build();
     }
 
+    @Cacheable(value = "webSearchCache", unless = "#result.isEmpty()")
     @CircuitBreaker(name = "searxngClient", fallbackMethod = "searchFallback")
     public String fetchContext(List<String> queries) {
         if (queries == null || queries.isEmpty()) return "";
@@ -56,7 +58,7 @@ public class SearXNGSearchClient {
             }
 
             return response.results().stream()
-                    .map(r -> r.title() + ": " + r.content())
+                    .map(r -> "- " + r.title() + ": " + r.content() + " (Source: " + r.url() + ")")
                     .collect(Collectors.joining("\n"));
 
         } catch (Exception e) {

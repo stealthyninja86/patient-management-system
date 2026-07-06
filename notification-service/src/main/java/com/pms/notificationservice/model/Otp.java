@@ -12,13 +12,7 @@ public class Otp {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    private String patientId;
-
-    private String doctorId;
-
-    private String hospitalId;
-
-    private String consentRequestId;
+    private String domainKey;
 
     private String phoneHash;
 
@@ -35,14 +29,10 @@ public class Otp {
 
     public Otp() {}
 
-    public Otp(UUID id, String patientId, String doctorId, String hospitalId, String consentRequestId,
-               String phoneHash, OtpStatus status, int attempts, Instant expiresAt, Instant createdAt,
-               Instant verifiedAt) {
+    public Otp(UUID id, String domainKey, String phoneHash, OtpStatus status, int attempts,
+               Instant expiresAt, Instant createdAt, Instant verifiedAt) {
         this.id = id;
-        this.patientId = patientId;
-        this.doctorId = doctorId;
-        this.hospitalId = hospitalId;
-        this.consentRequestId = consentRequestId;
+        this.domainKey = domainKey;
         this.phoneHash = phoneHash;
         this.status = status;
         this.attempts = attempts;
@@ -62,32 +52,11 @@ public class Otp {
         this.id = id;
     }
 
-    public String getPatientId() {
-        return patientId;
+    public String getDomainKey() {
+        return domainKey;
     }
-    public void setPatientId(String patientId) {
-        this.patientId = patientId;
-    }
-
-    public String getDoctorId() {
-        return doctorId;
-    }
-    public void setDoctorId(String doctorId) {
-        this.doctorId = doctorId;
-    }
-
-    public String getHospitalId() {
-        return hospitalId;
-    }
-    public void setHospitalId(String hospitalId) {
-        this.hospitalId = hospitalId;
-    }
-
-    public String getConsentRequestId() {
-        return consentRequestId;
-    }
-    public void setConsentRequestId(String consentRequestId) {
-        this.consentRequestId = consentRequestId;
+    public void setDomainKey(String domainKey) {
+        this.domainKey = domainKey;
     }
 
     public String getPhoneHash() {
@@ -135,10 +104,7 @@ public class Otp {
     public static class OtpBuilder {
 
         private UUID id;
-        private String patientId;
-        private String doctorId;
-        private String hospitalId;
-        private String consentRequestId;
+        private String domainKey;
         private String phoneHash;
         private OtpStatus status;
         private int attempts;
@@ -152,20 +118,8 @@ public class Otp {
             this.id = id;
             return this;
         }
-        public OtpBuilder patientId(String patientId) {
-            this.patientId = patientId;
-            return this;
-        }
-        public OtpBuilder doctorId(String doctorId) {
-            this.doctorId = doctorId;
-            return this;
-        }
-        public OtpBuilder hospitalId(String hospitalId) {
-            this.hospitalId = hospitalId;
-            return this;
-        }
-        public OtpBuilder consentRequestId(String consentRequestId) {
-            this.consentRequestId = consentRequestId;
+        public OtpBuilder domainKey(String domainKey) {
+            this.domainKey = domainKey;
             return this;
         }
         public OtpBuilder phoneHash(String phoneHash) {
@@ -195,7 +149,7 @@ public class Otp {
 
         public Otp build() {
             return new Otp(
-                    id, patientId, doctorId, hospitalId, consentRequestId, phoneHash,
+                    id, domainKey, phoneHash,
                     status, attempts, expiresAt, createdAt, verifiedAt
             );
         }

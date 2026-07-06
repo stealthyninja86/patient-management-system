@@ -143,6 +143,13 @@ public class PrescriptionController {
             return ResponseEntity.badRequest()
                     .body(new AISummaryResponse("Prompt is required", null, null));
         }
+        List<String> availablePrompts = prescriptionFacade.getAvailablePrompts();
+        if (!availablePrompts.contains(request.promptKey())) {
+            return ResponseEntity.badRequest()
+                    .body(new AISummaryResponse(
+                            "Invalid prompt. Available: " + String.join(", ", availablePrompts),
+                            null, null));
+        }
         AISummaryResponse response = prescriptionFacade.generatePrescriptionSummary(request.prescriptionId(), request.promptKey());
         return ResponseEntity.ok(response);
     }

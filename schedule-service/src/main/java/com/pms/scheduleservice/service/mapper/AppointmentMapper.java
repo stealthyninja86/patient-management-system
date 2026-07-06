@@ -28,7 +28,6 @@ public class AppointmentMapper {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm a");
         appointment.setTimeSlotName(
             timeSlot.getStartTime().format(fmt) + " - " + timeSlot.getEndTime().format(fmt));
-        appointment.setStatus(AppointmentStatus.BOOKED);
         return appointment;
     }
 

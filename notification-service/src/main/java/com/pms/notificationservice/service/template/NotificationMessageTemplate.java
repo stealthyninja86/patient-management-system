@@ -25,7 +25,7 @@ public abstract class NotificationMessageTemplate<T> {
         );
     }
 
-    protected abstract NotificationType getNotificationType();
+    public abstract NotificationType getNotificationType();
 
     protected abstract String getPatientId(T event);
 

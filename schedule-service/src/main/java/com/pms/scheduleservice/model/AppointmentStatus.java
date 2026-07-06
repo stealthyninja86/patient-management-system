@@ -1,5 +1,5 @@
 package com.pms.scheduleservice.model;
 
 public enum AppointmentStatus {
-    BOOKED, ONGOING, COMPLETED, CANCELLED
+    PENDING_OTP, BOOKED, ONGOING, COMPLETED, CANCELLED
 }

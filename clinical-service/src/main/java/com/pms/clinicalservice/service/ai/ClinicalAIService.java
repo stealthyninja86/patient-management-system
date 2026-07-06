@@ -32,39 +32,77 @@ public class ClinicalAIService {
 
     static final Map<String, String> PROMPT_TEMPLATES = Map.of(
             "summarize prescription",
-            "You are a friendly assistant. "
-                    + "Write in SECOND PERSON ('you', 'your'). "
-                    + "Start with 'You have been prescribed' or 'Your prescription is'. "
-                    + "Never use third person like 'the patient' or 'this prescription is for'. "
-                    + "Use verified context: {web_facts}. "
+            "You are a medical writing assistant producing a structured patient-friendly medication summary. "
+                    + "Write in SECOND PERSON ('you', 'your') throughout. "
+                    + "Never use third person like 'the patient' or 'the prescription'. "
+                    + "Exception: the very first metadata line uses '{patient}' directly with the patient's name, "
+                    + "then switch to second person ('you', 'your') for everything after. "
+                    + "Use verified context where available: {web_facts}. "
                     + "Diagnosis: {diagnosis}. Medications: {drugs}. "
-                    + "Write 2-4 warm, simple sentences covering: what this prescription is for, "
-                    + "and what each medication does for you. "
-                    + "Always name each drug and include dosage. "
-                    + "Use everyday language.",
+                    + "Pain score: {painScore}/10. Allergies: {allergies}. "
+                    + "Doctor note: {doctorNote}. "
+                    + "Produce a well-structured markdown summary with these sections:\n\n"
+                    + "### Prescription Summary\n"
+                    + "First line: 'This prescription is for {patient} at {hospital}, {department}, under {doctor}, dated {consultationDate}.' "
+                    + "Keep the metadata to a single line (max 3 lines). "
+                    + "Then open with 'You were diagnosed with' followed by the condition in plain language and what it means. "
+                    + "Reference {web_facts} for medical context.\n\n"
+                    + "#### Medications Prescribed\n"
+                    + "List each medication as a numbered item with the dosage and a brief description of its purpose (antibiotic, pain relief, etc.). "
+                    + "Use the format: **Drug Name Dosage** - Purpose.\n\n"
+                    + "#### Important Clinical Note\n"
+                    + "If allergies are listed (especially {allergies}), review the medications against them. "
+                    + "If any prescribed medication belongs to the same drug family as a listed allergen, "
+                    + "highlight this as a potential conflict that should be verified by the prescriber.\n\n"
+                    + "#### Doctor's Instructions\n"
+                    + "Convert {doctorNote} into clear bullet-point instructions.\n\n"
+                    + "#### Expected Recovery\n"
+                    + "Describe typical recovery expectations based on {web_facts}.\n\n"
+                    + "End with a prominent warning block using ⚠️ if any drug-allergy conflict exists. "
+                    + "Use everyday language throughout.\n\n"
+                    + "Finally, add a section called **Sources** listing each distinct URL from {web_facts} "
+                    + "as a numbered reference [1], [2], etc. and cite them in the text where used.",
 
             "explain drugs",
-            "You are a friendly pharmacist. "
+            "You are a clinical pharmacist writing a detailed patient medication guide. "
                     + "Write in SECOND PERSON ('you', 'your') throughout. "
                     + "Never use third person. "
                     + "Refer to verified info: {web_facts}. Medications: {drugs}. "
-                    + "For each medication explain in everyday words: "
-                    + "1. What it is and what it treats "
-                    + "2. When and how to take it "
-                    + "3. Side effects to watch for "
-                    + "4. Any precautions "
-                    + "Be thorough but easy to understand.",
+                    + "Allergies: {allergies}. Doctor note: {doctorNote}. "
+                    + "Produce a structured markdown document with:\n\n"
+                    + "### Medication Guide\n"
+                    + "A brief opening statement about the overall treatment plan.\n\n"
+                    + "For EACH medication, create a subsection with the drug name as a heading:\n"
+                    + "**What it is and what it treats** - One sentence.\n"
+                    + "**When and how to take it** - Clear dosing instructions.\n"
+                    + "**Side effects to watch for** - Common and serious side effects.\n"
+                    + "**Precautions** - Interactions, allergy warnings, contraindications.\n"
+                    + "Separate each drug section with a horizontal rule.\n\n"
+                    + "If {allergies} are documented, add a warning section at the end "
+                    + "flagging any prescribed drugs that may cross-react with the listed allergens.\n\n"
+                    + "Finally, add a section called **Sources** listing each distinct URL from {web_facts} "
+                    + "as a numbered reference [1], [2], etc. and cite them in the text where used.",
 
             "summarize diagnosis",
-            "You are a caring doctor. "
+            "You are a caring doctor explaining a diagnosis to a patient. "
                     + "Write in SECOND PERSON ('you', 'your') throughout. "
                     + "Start with 'You have been diagnosed with' or 'Your diagnosis is'. "
                     + "Never use third person like 'the patient' or 'patient presents with'. "
                     + "Diagnosis: {diagnosis}. Verified context: {web_facts}. "
                     + "Pain level: {painScore}/10. Allergies: {allergies}. "
                     + "Doctor note: {doctorNote}. "
-                    + "Explain in simple, warm language: what this diagnosis means for you, "
-                    + "what to expect, and what you should do next."
+                    + "Produce a structured markdown explanation with:\n\n"
+                    + "#### What this means for you\n"
+                    + "A plain-language explanation of the condition.\n\n"
+                    + "#### What to expect\n"
+                    + "Symptoms, treatment timeline, recovery expectations based on {web_facts}.\n\n"
+                    + "#### What you should do next\n"
+                    + "Actionable bullet points from {doctorNote}.\n\n"
+                    + "#### When to seek help\n"
+                    + "Red-flag symptoms that require urgent medical attention.\n\n"
+                    + "Use warm, reassuring language throughout.\n\n"
+                    + "Finally, add a section called **Sources** listing each distinct URL from {web_facts} "
+                    + "as a numbered reference [1], [2], etc. and cite them in the text where used."
     );
 
     public static int templateVersion() {
@@ -282,16 +320,20 @@ public class ClinicalAIService {
         String response = chatClient.prompt()
                 .user(u -> u
                         .text(template)
-                        .params(Map.of(
-                                "web_facts", webContext.isBlank() ? "No web context available" : webContext,
-                                "patient", dto.patientName(),
-                                "doctor", dto.doctorName(),
-                                "hospital", dto.hospitalName(),
-                                "diagnosis", dto.diagnosis(),
-                                "drugs", drugsList,
-                                "painScore", String.valueOf(dto.painScore()),
-                                "allergies", dto.allergies() != null ? dto.allergies() : "None reported",
-                                "doctorNote", dto.doctorNote() != null ? dto.doctorNote() : "None"
+                        .params(Map.ofEntries(
+                                Map.entry("web_facts", webContext.isBlank() ? "No web context available" : webContext),
+                                Map.entry("patient", dto.patientName()),
+                                Map.entry("doctor", dto.doctorName()),
+                                Map.entry("hospital", dto.hospitalName()),
+                                Map.entry("department", dto.departmentName() != null ? dto.departmentName() : "N/A"),
+                                Map.entry("consultationDate", dto.consultationDate() != null
+                                        ? dto.consultationDate().format(java.time.format.DateTimeFormatter.ofPattern("dd-MMM-yyyy"))
+                                        : "N/A"),
+                                Map.entry("diagnosis", dto.diagnosis()),
+                                Map.entry("drugs", drugsList),
+                                Map.entry("painScore", String.valueOf(dto.painScore())),
+                                Map.entry("allergies", dto.allergies() != null ? dto.allergies() : "None reported"),
+                                Map.entry("doctorNote", dto.doctorNote() != null ? dto.doctorNote() : "None")
                         )))
                 .call()
                 .content();
@@ -314,7 +356,7 @@ public class ClinicalAIService {
         String response = chatClient.prompt()
                 .user(u -> u
                         .text(VALIDATION_TEMPLATE)
-                        .params(Map.of(
+                        .params(Map.<String, Object>of(
                                 "web_facts", webContext,
                                 "summary", summary
                         )))
@@ -339,20 +381,31 @@ public class ClinicalAIService {
                 .anyMatch(c -> c.status() == Confidence.UNVERIFIED);
 
         if (hasContradictions) {
-            verification = "Some information in this summary contradicts medical sources. Please consult your doctor.";
+            String contradicted = claims.stream()
+                    .filter(c -> c.status() == Confidence.CONTRADICTED)
+                    .map(c -> "- " + c.text())
+                    .collect(Collectors.joining("\n"));
+            verification = "⚠️ The following information in this summary may contradict medical sources:\n"
+                    + contradicted + "\n\nPlease discuss these specific items with your doctor before acting on them.";
             kafkaTemplate.send("prescription-ai-contradiction-alert",
                     new ContradictionAlertEvent(prescriptionId, summary, claims, webContext));
-            logger.warn("CONTRADICTED claims in prescription {}", prescriptionId);
+            logger.warn("CONTRADICTED claims in prescription {}: {}", prescriptionId, contradicted);
         } else if (hasUnverified) {
+            String unverified = claims.stream()
+                    .filter(c -> c.status() == Confidence.UNVERIFIED)
+                    .map(c -> "- " + c.text())
+                    .collect(Collectors.joining("\n"));
+            verification = "✅ Most information has been verified against trusted medical references.\n"
+                    + "The following details could not be independently confirmed:\n"
+                    + unverified + "\n\nPlease verify these with your doctor.";
             kafkaTemplate.send("prescription-ai-unverified-alert",
                     new UnverifiedAlertEvent(prescriptionId, summary, claims, webContext));
-            logger.warn("UNVERIFIED claims in prescription {}", prescriptionId);
-            verification = "This summary has been verified against trusted medical references. Some details could not be independently confirmed.";
+            logger.warn("UNVERIFIED claims in prescription {}: {}", prescriptionId, unverified);
         } else {
             kafkaTemplate.send("prescription-ai-verified-alert",
                     new VerifiedAlertEvent(prescriptionId, summary, claims, webContext));
-            logger.info("VERIFIED claims in prescription {}", prescriptionId);
-            verification = "This summary has been verified against trusted medical references.";
+            logger.info("All claims VERIFIED for prescription {}", prescriptionId);
+            verification = "✅ This summary has been verified against trusted medical references.";
         }
         return verification;
     }

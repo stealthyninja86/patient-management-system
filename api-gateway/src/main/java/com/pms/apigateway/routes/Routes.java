@@ -19,6 +19,9 @@ public class Routes {
                         .path("/api-docs/patients")
                         .filters(f -> f.rewritePath("/api-docs/patients", "/v3/api-docs"))
                         .uri("lb://patient-service"))
+                .route("auth-token-route", r -> r
+                        .path("/oauth2/token", "/register/**", "/token")
+                        .uri("lb://auth-service"))
                 .route("auth-service-route", r -> r
                         .path("/auth/**")
                         .filters(f -> f.stripPrefix(1))
@@ -70,11 +73,15 @@ public class Routes {
                 .route("consent-route", r -> r
                         .path("/api/consent/**")
                         .filters(f -> f.stripPrefix(1))
-                        .uri("lb://notification-service"))
+                        .uri("lb://patient-service"))
                 .route("api-docs-notifications", r -> r
                         .path("/api-docs/notifications")
                         .filters(f -> f.rewritePath("/api-docs/notifications", "/v3/api-docs"))
                         .uri("lb://notification-service"))
+                .route("timeline-service-route", r -> r
+                        .path("/api/timeline/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("lb://timeline-service"))
                 .build();
     }
 }

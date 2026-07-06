@@ -11,6 +11,6 @@ public class OtpChannelStrategy implements NotificationChannelStrategy{
 
     @Override
     public List<NotificationChannel> resolveChannels() {
-        return List.of(NotificationChannel.SMS);
+        return List.of(NotificationChannel.SMS, NotificationChannel.EMAIL);
     }
 }
