@@ -155,9 +155,19 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment = appointmentRepository.save(appointment);
 
-        writeOutboxEvent(appointment, "APPOINTMENT_STATUS_CHANGED", null);
+        writeOutboxEvent(appointment, "APPOINTMENT_CANCELLED", null);
 
         return appointmentMapper.toResponseDTO(appointment);
+    }
+
+    private String deriveEventType(AppointmentStatus status) {
+        return switch (status) {
+            case BOOKED -> "APPOINTMENT_BOOKED";
+            case ONGOING -> "APPOINTMENT_ONGOING";
+            case COMPLETED -> "APPOINTMENT_COMPLETED";
+            case PENDING_OTP -> "APPOINTMENT_BOOKING_INITIATED";
+            case CANCELLED -> "APPOINTMENT_CANCELLED";
+        };
     }
 
     @Transactional
@@ -180,7 +190,7 @@ public class AppointmentService {
         appointment.setTimeSlotId(newTimeSlotId);
         appointment = appointmentRepository.save(appointment);
 
-        writeOutboxEvent(appointment, "APPOINTMENT_STATUS_CHANGED", null);
+        writeOutboxEvent(appointment, "APPOINTMENT_RESCHEDULED", null);
 
         return appointmentMapper.toResponseDTO(appointment);
     }
@@ -220,7 +230,7 @@ public class AppointmentService {
         }
         appointment = appointmentRepository.save(appointment);
 
-        writeOutboxEvent(appointment, "APPOINTMENT_STATUS_CHANGED", null);
+        writeOutboxEvent(appointment, deriveEventType(newStatus), null);
 
         return appointmentMapper.toResponseDTO(appointment);
     }

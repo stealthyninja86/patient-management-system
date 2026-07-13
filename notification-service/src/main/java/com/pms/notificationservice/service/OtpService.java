@@ -110,7 +110,8 @@ public class OtpService {
                     NotificationType.CONSENT_OTP,
                     channel,
                     phoneNumber,
-                    message
+                    message,
+                    Map.of()
             );
             notificationService.sendNotification(request);
         }

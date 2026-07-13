@@ -5,6 +5,8 @@ import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 /**
  * NotificationMessageTemplate for appointment start OTP.
  * Generated when the doctor is ready to begin — patient reads the code
@@ -51,5 +53,15 @@ public class AppointmentStartOtpTemplate
     @Override
     public String buildDedupKey(OtpNotificationContext ctx, NotificationChannel channel) {
         return "start-otp-" + ctx.domainKey() + ":" + channel.name().toLowerCase();
+    }
+
+    @Override
+    protected Map<String, Object> buildAttributes(OtpNotificationContext ctx, NotificationChannel channel) {
+        if (channel != NotificationChannel.EMAIL) return Map.of();
+        return Map.of(
+            "code", ctx.code(),
+            "domainKey", ctx.domainKey(),
+            "type", "start"
+        );
     }
 }

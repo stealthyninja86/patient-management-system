@@ -27,7 +27,7 @@ public class OutboxEvent {
     @Column(nullable = false, length = 100)
     private String topic;
 
-    @Column(columnDefinition = "JSONB", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String payload;
 
     @Column(name = "partition_key", length = 100)

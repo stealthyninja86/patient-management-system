@@ -5,6 +5,8 @@ import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class AppointmentConfirmationTemplate extends NotificationMessageTemplate<AppointmentEventDTO> {
 
@@ -44,5 +46,17 @@ public class AppointmentConfirmationTemplate extends NotificationMessageTemplate
     @Override
     public String buildDedupKey(AppointmentEventDTO event, NotificationChannel channel) {
         return "appt-" + event.appointmentId() + ":" + channel.name().toLowerCase();
+    }
+
+    @Override
+    protected Map<String, Object> buildAttributes(AppointmentEventDTO event, NotificationChannel channel) {
+        if (channel != NotificationChannel.EMAIL) return Map.of();
+        return Map.of(
+            "patientName", event.patientName() != null ? event.patientName() : "Patient",
+            "doctorName", event.doctorName() != null ? event.doctorName() : "your doctor",
+            "hospitalName", event.hospitalName() != null ? event.hospitalName() : "our facility",
+            "appointmentDate", event.appointmentDate() != null ? event.appointmentDate() : "the scheduled date",
+            "appointmentId", event.appointmentId()
+        );
     }
 }

@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS outbox (
                                       aggregate_type  VARCHAR(100)    NOT NULL,
     aggregate_id    VARCHAR(50)     NOT NULL,
     event_type      VARCHAR(100)    NOT NULL,
-    payload         JSONB           NOT NULL,
+    payload         TEXT           NOT NULL,
     topic           VARCHAR(100)    NOT NULL,
     partition_key   VARCHAR(100),
     published       BOOLEAN         NOT NULL DEFAULT false,

@@ -5,6 +5,8 @@ import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class PrescriptionReadyTemplate extends NotificationMessageTemplate<PrescriptionPdfGeneratedEventDTO> {
 
@@ -33,5 +35,14 @@ public class PrescriptionReadyTemplate extends NotificationMessageTemplate<Presc
     @Override
     public String buildDedupKey(PrescriptionPdfGeneratedEventDTO event, NotificationChannel channel) {
         return "rx-" + event.prescriptionId() + ":" + channel.name().toLowerCase();
+    }
+
+    @Override
+    protected Map<String, Object> buildAttributes(PrescriptionPdfGeneratedEventDTO event, NotificationChannel channel) {
+        if (channel != NotificationChannel.EMAIL) return Map.of();
+        return Map.of(
+            "prescriptionId", event.prescriptionId(),
+            "patientId", event.patientId()
+        );
     }
 }

@@ -12,29 +12,22 @@ public class PatientIntegrationTest {
         RestAssured.baseURI = "http://localhost:4004/";
     }
 
-    @Test
-    public void shouldReturnPatientWithValidToken(){
-        //Arrange
-        //act
-        //assert
-
-        String loginPayload = """
-                {
-                    "email": "test@test.com",
-                    "password": "password123"
-                }
-                """;
-
-        String token = given()
+    private String getDevToken(String email) {
+        return given()
                 .contentType("application/json")
-                .body(loginPayload)
+                .body("{\"email\":\"" + email + "\"}")
                 .when()
-                .post("/auth/login")
+                .post("/token")
                 .then()
                 .statusCode(200)
                 .extract()
                 .jsonPath()
                 .get("token");
+    }
+
+    @Test
+    public void shouldReturnPatientWithValidToken(){
+        String token = getDevToken("patient@test.com");
 
        given()
                .header("Authorization", "Bearer " + token)
@@ -43,5 +36,32 @@ public class PatientIntegrationTest {
                .then()
                .statusCode(200)
                .body("patients", notNullValue());
+    }
+
+    @Test
+    public void shouldRequestConsent(){
+        String token = getDevToken("doctor@test.com");
+
+        String consentRequestId = given()
+                .contentType("application/json")
+                .header("Authorization", "Bearer " + token)
+                .body("""
+                    {
+                        "patientId": "PMS-005",
+                        "doctorId": "DOC004",
+                        "hospitalId": "HOSP-001"
+                    }
+                    """)
+                .when()
+                .post("api/consent/request")
+                .then()
+                .statusCode(201)
+                .body("consentRequestId", notNullValue())
+                .extract()
+                .jsonPath()
+                .get("consentRequestId");
+
+        assert consentRequestId != null : "consentRequestId should not be null";
+        assert consentRequestId.toString().startsWith("CSNT") : "consentRequestId should start with CSNT";
     }
 }

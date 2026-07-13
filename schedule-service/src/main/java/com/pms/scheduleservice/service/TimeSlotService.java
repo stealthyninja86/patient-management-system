@@ -97,8 +97,8 @@ public class TimeSlotService {
         } catch (Exception e) {
             throw new DoctorNotFoundException("Doctor not found with id: " + request.doctorId());
         }
-        if(doctorName == null || !doctorName.equals(request.doctorName())) {
-            throw new DoctorNotFoundException("Doctor not found with id: " + request.doctorName());
+        if (request.doctorName() != null && !doctorName.equals(request.doctorName())) {
+            throw new DoctorNotFoundException("Doctor name mismatch: expected " + request.doctorName() + " but found " + doctorName);
         }
         String timeSlotId = idGenerator.nextId("TS", "time_slot_seq");
         TimeSlot timeSlot = timeSlotFactory.toEntity(request, timeSlotId, doctorName);

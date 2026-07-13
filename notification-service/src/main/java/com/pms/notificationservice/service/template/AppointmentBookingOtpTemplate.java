@@ -5,6 +5,8 @@ import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class AppointmentBookingOtpTemplate extends NotificationMessageTemplate<OtpNotificationContext> {
     @Override
@@ -47,5 +49,15 @@ public class AppointmentBookingOtpTemplate extends NotificationMessageTemplate<O
     @Override
     protected String buildDedupKey(OtpNotificationContext event, NotificationChannel channel) {
         return "booking-otp-" + event.domainKey() + ":" + channel.name().toLowerCase();
+    }
+
+    @Override
+    protected Map<String, Object> buildAttributes(OtpNotificationContext event, NotificationChannel channel) {
+        if (channel != NotificationChannel.EMAIL) return Map.of();
+        return Map.of(
+            "code", event.code(),
+            "domainKey", event.domainKey(),
+            "type", "booking"
+        );
     }
 }

@@ -5,6 +5,7 @@ import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 
 import java.util.List;
+import java.util.Map;
 
 public abstract class NotificationMessageTemplate<T> {
 
@@ -21,7 +22,8 @@ public abstract class NotificationMessageTemplate<T> {
                 getNotificationType(),
                 channel,
                 resolveRecipient(event, channel),
-                buildMessage(event, channel)
+                buildMessage(event, channel),
+                buildAttributes(event, channel)
         );
     }
 
@@ -34,4 +36,8 @@ public abstract class NotificationMessageTemplate<T> {
     protected abstract String resolveRecipient(T event, NotificationChannel channel);
 
     protected abstract String buildDedupKey(T event, NotificationChannel channel);
+
+    protected Map<String, Object> buildAttributes(T event, NotificationChannel channel) {
+        return Map.of();
+    }
 }
