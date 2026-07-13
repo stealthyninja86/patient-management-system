@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package patient.events;
+option java_multiple_files = true;
+option java_package = "patient";
+
+message PatientEvent{
+  string patientId = 1;
+  string name = 2;
+  string email = 3;
+  string action = 4;             // CREATED, UPDATED, MERGED (was event_type)
+  string eventId = 6;
+  string hospitalId = 7;
+  int64 timestampSeconds = 8;
+  int32 timestampNanos = 9;
+}

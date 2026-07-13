@@ -1,5 +1,7 @@
 package com.pms.scheduleservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pms.scheduleservice.dto.event.AppointmentEventDTO;
 import com.pms.scheduleservice.dto.request.AppointmentRequestDTO;
 import com.pms.scheduleservice.dto.response.AppointmentResponseDTO;
 import com.pms.scheduleservice.dto.response.DoctorPatientDTO;
@@ -12,8 +14,10 @@ import com.pms.scheduleservice.exception.TimeSlotNotFoundException;
 import com.pms.scheduleservice.service.mapper.AppointmentMapper;
 import com.pms.scheduleservice.model.Appointment;
 import com.pms.scheduleservice.model.AppointmentStatus;
+import com.pms.scheduleservice.model.OutboxEvent;
 import com.pms.scheduleservice.model.TimeSlot;
 import com.pms.scheduleservice.repository.AppointmentRepository;
+import com.pms.scheduleservice.repository.OutboxRepository;
 import com.pms.scheduleservice.repository.TimeSlotRepository;
 import com.pms.scheduleservice.service.util.IdGenerator;
 import org.slf4j.Logger;
@@ -22,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import patient.PatientResponse;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AppointmentService {
@@ -31,20 +37,23 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final TimeSlotRepository timeSlotRepository;
-    private final AppointmentKafkaProducer kafkaProducer;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
     private final IdGenerator idGenerator;
     private final AppointmentMapper appointmentMapper;
     private final PatientGrpcClient patientGrpcClient;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                                TimeSlotRepository timeSlotRepository,
-                               AppointmentKafkaProducer kafkaProducer,
+                               OutboxRepository outboxRepository,
+                               ObjectMapper objectMapper,
                                IdGenerator idGenerator,
                                AppointmentMapper appointmentMapper,
                                PatientGrpcClient patientGrpcClient) {
         this.appointmentRepository = appointmentRepository;
         this.timeSlotRepository = timeSlotRepository;
-        this.kafkaProducer = kafkaProducer;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
         this.idGenerator = idGenerator;
         this.appointmentMapper = appointmentMapper;
         this.patientGrpcClient = patientGrpcClient;
@@ -146,7 +155,7 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
+        writeOutboxEvent(appointment, "APPOINTMENT_STATUS_CHANGED", null);
 
         return appointmentMapper.toResponseDTO(appointment);
     }
@@ -171,7 +180,7 @@ public class AppointmentService {
         appointment.setTimeSlotId(newTimeSlotId);
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
+        writeOutboxEvent(appointment, "APPOINTMENT_STATUS_CHANGED", null);
 
         return appointmentMapper.toResponseDTO(appointment);
     }
@@ -211,9 +220,32 @@ public class AppointmentService {
         }
         appointment = appointmentRepository.save(appointment);
 
-        kafkaProducer.sendAppointmentStatusChangedEvent(appointment, null);
+        writeOutboxEvent(appointment, "APPOINTMENT_STATUS_CHANGED", null);
 
         return appointmentMapper.toResponseDTO(appointment);
+    }
+
+    private void writeOutboxEvent(Appointment appointment, String eventType, String appointmentDate) {
+        try {
+            AppointmentEventDTO dto = appointmentMapper.toEventDTO(appointment, eventType, null, null, null, appointmentDate);
+            String payload = objectMapper.writeValueAsString(dto);
+            OutboxEvent outboxEvent = new OutboxEvent(
+                UUID.randomUUID(),
+                "APPOINTMENT",
+                appointment.getAppointmentId(),
+                eventType,
+                "appointment-events",
+                payload,
+                appointment.getAppointmentId(),
+                false,
+                LocalDateTime.now(),
+                null
+            );
+            outboxRepository.save(outboxEvent);
+            log.debug("Outbox event saved: {} for appointment: {}", eventType, appointment.getAppointmentId());
+        } catch (Exception e) {
+            log.error("Failed to write outbox event for appointment: {}", appointment.getAppointmentId(), e);
+        }
     }
 
     @Transactional

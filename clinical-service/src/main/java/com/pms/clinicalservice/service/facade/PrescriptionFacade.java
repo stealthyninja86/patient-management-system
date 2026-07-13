@@ -1,5 +1,6 @@
 package com.pms.clinicalservice.service.facade;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pms.clinicalservice.dto.event.UnverifiedAlertEvent;
 import com.pms.clinicalservice.dto.event.VerifiedAlertEvent;
 import com.pms.clinicalservice.dto.request.Claim;
@@ -12,8 +13,10 @@ import com.pms.clinicalservice.kafka.PrescriptionPdfTaskEvent;
 import com.pms.clinicalservice.model.Confidence;
 import com.pms.clinicalservice.model.DocumentStatus;
 import com.pms.clinicalservice.model.Drug;
+import com.pms.clinicalservice.model.OutboxEvent;
 import com.pms.clinicalservice.model.Prescription;
 import com.pms.clinicalservice.model.PrescriptionDocument;
+import com.pms.clinicalservice.repository.OutboxRepository;
 import com.pms.clinicalservice.repository.PrescriptionDocumentRepository;
 import com.pms.clinicalservice.repository.PrescriptionRepository;
 import com.pms.clinicalservice.service.PrescriptionService;
@@ -36,7 +39,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import patient.PatientResponse;
@@ -44,6 +46,7 @@ import patient.PatientResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -54,11 +57,12 @@ public class PrescriptionFacade {
     private final PrescriptionService prescriptionService;
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionRepository prescriptionRepository;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
     private final ScheduleGrpcClient scheduleGrpcClient;
     private final HospitalGrpcClient hospitalGrpcClient;
     private final PatientGrpcClient patientGrpcClient;
     private final IdGenerator idGenerator;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PrescriptionDocumentRepository prescriptionDocumentRepository;
     private final StorageService storageService;
     private final ClinicalAIService clinicalAIService;
@@ -67,11 +71,12 @@ public class PrescriptionFacade {
     public PrescriptionFacade(PrescriptionService prescriptionService,
                               PrescriptionMapper prescriptionMapper,
                               PrescriptionRepository prescriptionRepository,
+                              OutboxRepository outboxRepository,
+                              ObjectMapper objectMapper,
                               ScheduleGrpcClient scheduleGrpcClient,
                               HospitalGrpcClient hospitalGrpcClient,
                               PatientGrpcClient patientGrpcClient,
                               IdGenerator idGenerator,
-                              KafkaTemplate<String, Object> kafkaTemplate,
                               PrescriptionDocumentRepository prescriptionDocumentRepository,
                               StorageService storageService,
                               ClinicalAIService clinicalAIService,
@@ -79,11 +84,12 @@ public class PrescriptionFacade {
         this.prescriptionService = prescriptionService;
         this.prescriptionMapper = prescriptionMapper;
         this.prescriptionRepository = prescriptionRepository;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
         this.scheduleGrpcClient = scheduleGrpcClient;
         this.hospitalGrpcClient = hospitalGrpcClient;
         this.patientGrpcClient = patientGrpcClient;
         this.idGenerator = idGenerator;
-        this.kafkaTemplate = kafkaTemplate;
         this.prescriptionDocumentRepository = prescriptionDocumentRepository;
         this.storageService = storageService;
         this.clinicalAIService = clinicalAIService;
@@ -195,7 +201,30 @@ public class PrescriptionFacade {
         doc.setGeneratedAt(null);
         prescriptionDocumentRepository.save(doc);
 
-        kafkaTemplate.send("prescription-pdf-tasks", prescriptionId, new PrescriptionPdfTaskEvent(prescriptionId));
+        writePdfTaskEvent(prescriptionId);
+    }
+
+    private void writePdfTaskEvent(String prescriptionId) {
+        try {
+            PrescriptionPdfTaskEvent event = new PrescriptionPdfTaskEvent(prescriptionId);
+            String payload = objectMapper.writeValueAsString(event);
+            OutboxEvent outboxEvent = new OutboxEvent(
+                UUID.randomUUID(),
+                "PRESCRIPTION",
+                prescriptionId,
+                "PRESCRIPTION_PDF_TASK",
+                "prescription-pdf-tasks",
+                payload,
+                prescriptionId,
+                false,
+                LocalDateTime.now(),
+                null
+            );
+            outboxRepository.save(outboxEvent);
+            log.debug("Outbox event saved: PRESCRIPTION_PDF_TASK for prescription: {}", prescriptionId);
+        } catch (Exception e) {
+            log.error("Failed to write outbox event for prescription task: {}", prescriptionId, e);
+        }
     }
 
     public ResponseEntity<?> getPrescriptionPdf(String prescriptionId) {

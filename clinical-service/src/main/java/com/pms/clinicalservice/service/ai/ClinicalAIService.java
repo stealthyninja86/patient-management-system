@@ -1,5 +1,6 @@
 package com.pms.clinicalservice.service.ai;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pms.clinicalservice.dto.event.ContradictionAlertEvent;
 import com.pms.clinicalservice.dto.event.UnverifiedAlertEvent;
 import com.pms.clinicalservice.dto.event.VerifiedAlertEvent;
@@ -7,19 +8,22 @@ import com.pms.clinicalservice.dto.request.Claim;
 import com.pms.clinicalservice.dto.response.DrugResponseDTO;
 import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
 import com.pms.clinicalservice.model.Confidence;
+import com.pms.clinicalservice.model.OutboxEvent;
+import com.pms.clinicalservice.repository.OutboxRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +32,8 @@ public class ClinicalAIService {
     private static final Logger logger = LoggerFactory.getLogger(ClinicalAIService.class);
 
     private final ChatClient chatClient;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     static final Map<String, String> PROMPT_TEMPLATES = Map.of(
             "summarize prescription",
@@ -122,12 +127,14 @@ public class ClinicalAIService {
                     + "--- SUMMARY TO CHECK ---\n{summary}";
 
     public ClinicalAIService(ChatClient.Builder chatClientBuilder,
-                             KafkaTemplate<String, Object> kafkaTemplate) {
+                             OutboxRepository outboxRepository,
+                             ObjectMapper objectMapper) {
         this.chatClient = chatClientBuilder.
                 defaultAdvisors(new SimpleLoggerAdvisor()
                 )
                 .build();
-        this.kafkaTemplate =  kafkaTemplate;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
     }
 
     public List<String> getAvailablePrompts() {
@@ -371,6 +378,28 @@ public class ClinicalAIService {
         return List.of(new Claim("AI validation unavailable", Confidence.UNVERIFIED));
     }
 
+    private void writeAlertEvent(String topic, String eventType, Object event) {
+        try {
+            String payload = objectMapper.writeValueAsString(event);
+            OutboxEvent outboxEvent = new OutboxEvent(
+                UUID.randomUUID(),
+                "PRESCRIPTION",
+                "",
+                eventType,
+                topic,
+                payload,
+                null,
+                false,
+                LocalDateTime.now(),
+                null
+            );
+            outboxRepository.save(outboxEvent);
+            logger.debug("Outbox event saved: {} for topic: {}", eventType, topic);
+        } catch (Exception e) {
+            logger.error("Failed to write outbox event for topic: {}", topic, e);
+        }
+    }
+
     public String generateVerficationMessage(String summary, String webContext, String prescriptionId) {
         String verification;
         List<Claim> claims = validate(summary, webContext);
@@ -387,7 +416,7 @@ public class ClinicalAIService {
                     .collect(Collectors.joining("\n"));
             verification = "⚠️ The following information in this summary may contradict medical sources:\n"
                     + contradicted + "\n\nPlease discuss these specific items with your doctor before acting on them.";
-            kafkaTemplate.send("prescription-ai-contradiction-alert",
+            writeAlertEvent("prescription-ai-contradiction-alert", "AI_CONTRADICTION_ALERT",
                     new ContradictionAlertEvent(prescriptionId, summary, claims, webContext));
             logger.warn("CONTRADICTED claims in prescription {}: {}", prescriptionId, contradicted);
         } else if (hasUnverified) {
@@ -398,11 +427,11 @@ public class ClinicalAIService {
             verification = "✅ Most information has been verified against trusted medical references.\n"
                     + "The following details could not be independently confirmed:\n"
                     + unverified + "\n\nPlease verify these with your doctor.";
-            kafkaTemplate.send("prescription-ai-unverified-alert",
+            writeAlertEvent("prescription-ai-unverified-alert", "AI_UNVERIFIED_ALERT",
                     new UnverifiedAlertEvent(prescriptionId, summary, claims, webContext));
             logger.warn("UNVERIFIED claims in prescription {}: {}", prescriptionId, unverified);
         } else {
-            kafkaTemplate.send("prescription-ai-verified-alert",
+            writeAlertEvent("prescription-ai-verified-alert", "AI_VERIFIED_ALERT",
                     new VerifiedAlertEvent(prescriptionId, summary, claims, webContext));
             logger.info("All claims VERIFIED for prescription {}", prescriptionId);
             verification = "✅ This summary has been verified against trusted medical references.";

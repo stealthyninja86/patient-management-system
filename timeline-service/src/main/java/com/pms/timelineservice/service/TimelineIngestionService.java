@@ -35,22 +35,29 @@ public class TimelineIngestionService {
                                 String appointmentStatus, String startTime,
                                 String endTime
     ){
+        Instant startedAt;
+        try { startedAt = startTime != null ? Instant.parse(startTime) : Instant.now(); }
+        catch (Exception e) { startedAt = Instant.now(); }
+
+        Instant endedAt;
+        try { endedAt = endTime != null ? Instant.parse(endTime) : null; }
+        catch (Exception e) { endedAt = null; }
+
         Query query = Query.query(
                 Criteria.where("patientId").is(patientId)
+                        .and("entries.appointmentId").is(appointmentId)
         );
         Update update = new Update()
-                .set("entries.$[elem].appointmentId", appointmentId)
-                .set("entries.$[elem].appointmentStatus", appointmentStatus)
-                .set("entries.$[elem].doctorId", doctorId)
-                .set("entries.$[elem].doctorName", doctorName)
-                .set("entries.$[elem].hospitalId", hospitalId)
-                .set("entries.$[elem].hospitalName", hospitalName)
-                .set("entries.$[elem].startedAt", startTime)
-                .set("entries.$[elem].endedAt", endTime)
-                .set("cachedAt", Instant.now())
-                .filterArray(Criteria.where("elem.appointmentId").is(appointmentId));
+                .set("entries.$.appointmentStatus", appointmentStatus)
+                .set("entries.$.doctorId", doctorId)
+                .set("entries.$.doctorName", doctorName)
+                .set("entries.$.hospitalId", hospitalId)
+                .set("entries.$.hospitalName", hospitalName)
+                .set("entries.$.startedAt", startedAt)
+                .set("entries.$.endedAt", endedAt)
+                .set("cachedAt", Instant.now());
 
-        var result = mongoTemplate.updateMulti(query, update, PatientTimeline.class);
+        var result = mongoTemplate.updateFirst(query, update, PatientTimeline.class);
 
         if(result.getModifiedCount() == 0 && result.getMatchedCount() == 0){
             TimelineEntry entry = new  TimelineEntry();
@@ -61,8 +68,8 @@ public class TimelineIngestionService {
             entry.setHospitalId(hospitalId);
             entry.setHospitalName(hospitalName);
             entry.setAppointmentStatus(appointmentStatus);
-            entry.setStartedAt(Instant.parse(startTime));
-            entry.setEndedAt(Instant.parse(endTime));
+            entry.setStartedAt(startedAt);
+            entry.setEndedAt(endedAt);
             entry.setPrescriptions(new ArrayList<>());
 
             Query pushQuery = Query.query(
@@ -71,8 +78,7 @@ public class TimelineIngestionService {
             );
             Update pushUpdate = new  Update()
                     .push("entries", entry)
-                    .set("cachedAt", Instant.now()
-                    );
+                    .set("cachedAt", Instant.now());
             mongoTemplate.upsert(pushQuery, pushUpdate, PatientTimeline.class);
         }
 
@@ -85,13 +91,13 @@ public class TimelineIngestionService {
                                            String prescriptionId, String status){
         Query query = Query.query(
                 Criteria.where("patientId").is(patientId)
+                        .and("entries.appointmentId").is(appointmentId)
         );
 
         Update update = new Update()
-                .push("entries.$[elem].prescriptions",
+                .push("entries.$.prescriptions",
                         Map.of("prescriptionId", prescriptionId,
-                        "status", status))
-                .filterArray(Criteria.where("elem.appointmentId").is(appointmentId));
+                        "status", status));
 
         mongoTemplate.updateFirst(query, update, PatientTimeline.class);
 

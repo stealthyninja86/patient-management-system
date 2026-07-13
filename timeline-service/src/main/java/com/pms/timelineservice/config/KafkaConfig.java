@@ -99,9 +99,10 @@ public class KafkaConfig {
     // ── Shared error handler ──
 
     private CommonErrorHandler errorHandler() {
-        return new DefaultErrorHandler((record, exception) ->
+        return new DefaultErrorHandler((record, exception) -> {
             log.error("Kafka error after retries exhausted: topic={}, key={}, error={}",
-                record.topic(), record.key(), exception.getMessage()),
-            new FixedBackOff(0, 0));
+                record.topic(), record.key(), exception.getMessage());
+            log.error("Full exception:", exception);
+        }, new FixedBackOff(0, 0));
     }
 }

@@ -1,5 +1,6 @@
 package com.pms.patientservice.service.facade;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pms.patientservice.dto.request.PatientGrpcRequestDTO;
 import com.pms.patientservice.dto.request.PatientRequestDTO;
 import com.pms.patientservice.dto.response.PatientResponseDTO;
@@ -8,16 +9,19 @@ import com.pms.patientservice.exception.PatientNotFoundException;
 import com.pms.patientservice.service.mapper.PatientMapper;
 import com.pms.patientservice.grpc.BillingGrpcClient;
 import com.pms.patientservice.model.Patient;
+import com.pms.patientservice.model.OutboxEvent;
+import com.pms.patientservice.repository.OutboxRepository;
 import com.pms.patientservice.repository.PatientRepository;
 import com.pms.patientservice.service.PatientService;
-import com.pms.patientservice.service.strategy.PatientEventOrchestrator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -27,18 +31,21 @@ public class PatientFacade {
 
     private final PatientService patientService;
     private final PatientRepository patientRepository;
-    private final PatientEventOrchestrator patientEventOrchestrator;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
     private final BillingGrpcClient billingGrpcClient;
     private final PatientMapper patientMapper;
 
     public PatientFacade(PatientService patientService,
                          PatientRepository patientRepository,
-                         PatientEventOrchestrator patientEventOrchestrator,
+                         OutboxRepository outboxRepository,
+                         ObjectMapper objectMapper,
                          BillingGrpcClient billingGrpcClient,
                          PatientMapper patientMapper) {
         this.patientService = patientService;
         this.patientRepository = patientRepository;
-        this.patientEventOrchestrator = patientEventOrchestrator;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
         this.billingGrpcClient = billingGrpcClient;
         this.patientMapper = patientMapper;
     }
@@ -58,7 +65,7 @@ public class PatientFacade {
         }
         Patient created = patientService.createPatient(dto);
         billingGrpcClient.createBillingAccount(created.getPatientId(), created.getName(), created.getEmail());
-        patientEventOrchestrator.publishAll(created);
+        writePatientCreatedEvent(created);
         return patientMapper.toResponseDTO(created);
     }
 
@@ -71,7 +78,7 @@ public class PatientFacade {
         Patient patient = patientMapper.createPatient(dto);
         Patient saved = patientRepository.save(patient);
         billingGrpcClient.createBillingAccount(saved.getPatientId(), saved.getName(), saved.getEmail());
-        patientEventOrchestrator.publishAll(saved);
+        writePatientCreatedEvent(saved);
         return patientMapper.toResponseDTO(saved);
     }
 
@@ -102,5 +109,32 @@ public class PatientFacade {
             throw new PatientNotFoundException("Patient ID is required");
         }
         return patientMapper.toResponseDTO(patientService.getPatientByPatientId(patientId));
+    }
+
+    private void writePatientCreatedEvent(Patient patient) {
+        try {
+            String payload = objectMapper.writeValueAsString(Map.of(
+                "patientId", patient.getPatientId(),
+                "name", patient.getName(),
+                "email", patient.getEmail(),
+                "eventType", "PATIENT_CREATED"
+            ));
+            OutboxEvent event = new OutboxEvent(
+                UUID.randomUUID(),
+                "PATIENT",
+                patient.getPatientId(),
+                "PATIENT_CREATED",
+                "patient",
+                payload,
+                patient.getPatientId(),
+                false,
+                LocalDateTime.now(),
+                null
+            );
+            outboxRepository.save(event);
+            log.debug("Outbox event saved: PATIENT_CREATED for patient: {}", patient.getPatientId());
+        } catch (Exception e) {
+            log.error("Failed to write outbox event for patient: {}", patient.getPatientId(), e);
+        }
     }
 }

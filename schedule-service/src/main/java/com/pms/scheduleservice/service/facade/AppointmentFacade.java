@@ -139,6 +139,11 @@ public class AppointmentFacade {
         return appointmentId;
     }
 
+    public AppointmentResponseDTO confirmBookingDev(String appointmentId) {
+        log.debug("Dev bypass: confirming booking for appointment: {} (no OTP)", appointmentId);
+        return appointmentService.updateAppointmentStatus(appointmentId, AppointmentStatus.BOOKED);
+    }
+
     public AppointmentResponseDTO confirmStart(String appointmentId, String code) {
         log.debug("Confirming start via facade for appointment: {}", appointmentId);
 

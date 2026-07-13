@@ -1,5 +1,8 @@
 package com.pms.timelineservice.dto.event;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record AppointmentEvent(
         String patientId,
         String appointmentId,
