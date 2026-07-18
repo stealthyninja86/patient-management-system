@@ -34,7 +34,7 @@ public class NotificationFacade {
     }
 
     public boolean sendNotification(NotificationRequest request) {
-        return notificationService.sendNotification(request);
+        return notificationService.sendNotification(notificationMapper.toMessage(request));
     }
 
     public List<NotificationResponseDTO> getPatientNotificationHistory(String patientId) {

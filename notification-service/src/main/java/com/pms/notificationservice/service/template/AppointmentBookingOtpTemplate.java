@@ -1,14 +1,30 @@
 package com.pms.notificationservice.service.template;
 
+import com.pms.notificationservice.dto.event.ConsentOtpNotification;
+import com.pms.notificationservice.dto.event.NotificationMessage;
 import com.pms.notificationservice.dto.event.OtpNotificationContext;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 @Component
 public class AppointmentBookingOtpTemplate extends NotificationMessageTemplate<OtpNotificationContext> {
+
+    @Override
+    public NotificationMessage createRequest(OtpNotificationContext ctx, NotificationChannel channel) {
+        return new ConsentOtpNotification(
+                buildDedupKey(ctx, channel),
+                getPatientId(ctx),
+                NotificationType.APPOINTMENT_BOOKING,
+                channel,
+                resolveRecipient(ctx, channel),
+                buildMessage(ctx, channel),
+                ctx.code(),
+                ctx.domainKey(),
+                "booking"
+        );
+    }
+
     @Override
     public NotificationType getNotificationType() {
         return NotificationType.APPOINTMENT_BOOKING;
@@ -49,15 +65,5 @@ public class AppointmentBookingOtpTemplate extends NotificationMessageTemplate<O
     @Override
     protected String buildDedupKey(OtpNotificationContext event, NotificationChannel channel) {
         return "booking-otp-" + event.domainKey() + ":" + channel.name().toLowerCase();
-    }
-
-    @Override
-    protected Map<String, Object> buildAttributes(OtpNotificationContext event, NotificationChannel channel) {
-        if (channel != NotificationChannel.EMAIL) return Map.of();
-        return Map.of(
-            "code", event.code(),
-            "domainKey", event.domainKey(),
-            "type", "booking"
-        );
     }
 }

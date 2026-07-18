@@ -30,6 +30,8 @@ public class AppointmentMapper {
         appointment.setPatientId(request.patientId());
         appointment.setDoctorId(timeSlot.getDoctorId());
         appointment.setDoctorName(timeSlot.getDoctorName());
+        appointment.setHospitalId(timeSlot.getHospitalId());
+        appointment.setHospitalName(timeSlot.getHospitalName());
         appointment.setTimeSlotId(request.timeSlotId());
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm a");
         appointment.setTimeSlotName(
@@ -59,12 +61,20 @@ public class AppointmentMapper {
         log.debug("Converting Appointment to EventDTO for appointmentId: {}, eventType: {}", appointment.getAppointmentId(), eventType);
         String startTime = null;
         String endTime = null;
+        String resolvedDate = appointmentDate;
         if (appointment.getTimeSlotId() != null) {
             var tsOpt = timeSlotRepository.findByTimeSlotId(appointment.getTimeSlotId());
             if (tsOpt.isPresent()) {
                 var ts = tsOpt.get();
-                if (ts.getStartTime() != null) startTime = ts.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
-                if (ts.getEndTime() != null) endTime = ts.getEndTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+                if (ts.getStartTime() != null) {
+                    startTime = ts.getStartTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+                    if (resolvedDate == null) {
+                        resolvedDate = ts.getStartTime().toLocalDate().toString();
+                    }
+                }
+                if (ts.getEndTime() != null) {
+                    endTime = ts.getEndTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+                }
             }
         }
         return new AppointmentEventDTO(
@@ -80,7 +90,7 @@ public class AppointmentMapper {
             hospitalName,
             appointment.getTimeSlotId(),
             appointment.getStatus().name(),
-            appointmentDate,
+            resolvedDate,
             startTime,
             endTime
         );

@@ -1,7 +1,10 @@
 package com.pms.notificationservice.service;
 
+import com.pms.notificationservice.dto.event.AppointmentConfirmationNotification;
+import com.pms.notificationservice.dto.event.ConsentOtpNotification;
+import com.pms.notificationservice.dto.event.NotificationMessage;
+import com.pms.notificationservice.dto.event.PrescriptionReadyNotification;
 import com.pms.notificationservice.service.adapter.NotificationProvider;
-import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.model.Notification;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationStatus;
@@ -40,18 +43,18 @@ public class NotificationService {
     private final List<NotificationProvider> providers;
     private final Map<NotificationChannel, NotificationProvider> providerMap = new EnumMap<>(NotificationChannel.class);
     private final MetricsService metrics;
-    private final NotificationMapper notificationFactory;
+    private final NotificationMapper notificationMapper;
 
     public NotificationService(NotificationRepository notificationRepository,
-                               StringRedisTemplate redisTemplate,
-                               List<NotificationProvider> providers,
-                               MetricsService metrics,
-                               NotificationMapper notificationFactory) {
+                                StringRedisTemplate redisTemplate,
+                                List<NotificationProvider> providers,
+                                MetricsService metrics,
+                                NotificationMapper notificationMapper) {
         this.notificationRepository = notificationRepository;
         this.redisTemplate = redisTemplate;
         this.providers = providers;
         this.metrics = metrics;
-        this.notificationFactory = notificationFactory;
+        this.notificationMapper = notificationMapper;
     }
 
     @PostConstruct
@@ -61,57 +64,46 @@ public class NotificationService {
         }
     }
 
-    /**
-     * Send a notification with Redis dedup check.
-     * Uses SETNX to prevent double-send on consumer retries.
-     *
-     * @return true if sent, false if dedup skipped
-     */
     @Retryable(
             retryFor = Exception.class,
             maxAttempts = 3,
             backoff = @Backoff(delay = 1000, multiplier = 2.0)
     )
    @Transactional
-   public boolean sendNotification(NotificationRequest notificationRequest){
-        if (notificationRequest.recipient() == null || notificationRequest.recipient().isBlank()) {
+   public boolean sendNotification(NotificationMessage message){
+        if (message.recipient() == null || message.recipient().isBlank()) {
             throw new IllegalArgumentException("Recipient cannot be empty");
         }
-        String dedupKey = DEDUP_KEY_PREFIX + notificationRequest.eventId() + ":" + notificationRequest.channel().name();
+        String dedupKey = DEDUP_KEY_PREFIX + message.eventId() + ":" + message.channel().name();
 
-        //check if already sent
         Boolean wasSet = redisTemplate.opsForValue()
                 .setIfAbsent(dedupKey, "1", dedupTtlHours, TimeUnit.HOURS);
 
         if(Boolean.FALSE.equals(wasSet)){
-            log.info("Duplicate notification suppressed: eventId={}, channel={}", notificationRequest.eventId(), notificationRequest.channel());
+            log.info("Duplicate notification suppressed: eventId={}, channel={}", message.eventId(), message.channel());
             metrics.recordDedupHit();
             return false;
         }
 
         metrics.recordDedupMiss();
 
-        //create notification record
-        Notification notification = notificationFactory.createNotification(notificationRequest);
+        Notification notification = notificationMapper.createNotification(message);
 
         try{
-            // look up provider by channel and send
-            NotificationProvider provider = providerMap.get(notificationRequest.channel());
+            NotificationProvider provider = providerMap.get(message.channel());
             if (provider == null){
                 throw new IllegalArgumentException(
-                        "No provider found in channel: " + notificationRequest.channel()
+                        "No provider found in channel: " + message.channel()
                 );
             }
-            provider.send(notificationRequest);
-            metrics.recordNotificationSent(notificationRequest.channel().name());
-            //mark as sent
-            log.info("Notification sent for patientId: {}, with message: {}", notificationRequest.patientId(), notificationRequest.message());
+            provider.send(message);
+            metrics.recordNotificationSent(message.channel().name());
+            log.info("Notification sent for patientId: {}, type: {}", message.patientId(), message.type());
             notification.setStatus(NotificationStatus.SENT);
             notification.setSentAt(LocalDateTime.now());
             notificationRepository.save(notification);
         }
         catch (Exception e){
-            //mark as failed
             log.error("failed to send notification for patient id:{} with message:{}", notification.getPatientId(), e.getMessage());
             notification.setStatus(NotificationStatus.FAILED);
             notification.setErrorMessage(e.getMessage());
@@ -122,15 +114,10 @@ public class NotificationService {
         return true;
     }
 
-    /**
-     * Called when all retry attempts are exhausted.
-     * The notification is already marked FAILED (from the catch block),
-     * but we keep the dedup key so it's not retried via Kafka reprocessing.
-     */
     @Recover
-    public boolean recover(Exception e, NotificationRequest notificationRequest){
-        metrics.recordNotificationFailed(notificationRequest.channel().name());
-        log.error("All notification retries exhausted: eventId={}, channel={}, error={}", notificationRequest.eventId(), notificationRequest.channel(), e.getMessage());
+    public boolean recover(Exception e, NotificationMessage message){
+        metrics.recordNotificationFailed(message.channel().name());
+        log.error("All notification retries exhausted: eventId={}, channel={}, error={}", message.eventId(), message.channel(), e.getMessage());
         return false;
     }
 

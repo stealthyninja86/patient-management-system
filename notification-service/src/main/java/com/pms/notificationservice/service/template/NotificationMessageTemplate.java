@@ -1,31 +1,20 @@
 package com.pms.notificationservice.service.template;
 
-import com.pms.notificationservice.dto.request.NotificationRequest;
+import com.pms.notificationservice.dto.event.NotificationMessage;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 
 import java.util.List;
-import java.util.Map;
 
 public abstract class NotificationMessageTemplate<T> {
 
-    public final List<NotificationRequest> createRequests(T event, List<NotificationChannel> channels) {
+    public final List<NotificationMessage> createRequests(T event, List<NotificationChannel> channels) {
         return channels.stream()
                 .map(channel -> createRequest(event, channel))
                 .toList();
     }
 
-    public final NotificationRequest createRequest(T event, NotificationChannel channel) {
-        return new NotificationRequest(
-                buildDedupKey(event, channel),
-                getPatientId(event),
-                getNotificationType(),
-                channel,
-                resolveRecipient(event, channel),
-                buildMessage(event, channel),
-                buildAttributes(event, channel)
-        );
-    }
+    public abstract NotificationMessage createRequest(T event, NotificationChannel channel);
 
     public abstract NotificationType getNotificationType();
 
@@ -36,8 +25,4 @@ public abstract class NotificationMessageTemplate<T> {
     protected abstract String resolveRecipient(T event, NotificationChannel channel);
 
     protected abstract String buildDedupKey(T event, NotificationChannel channel);
-
-    protected Map<String, Object> buildAttributes(T event, NotificationChannel channel) {
-        return Map.of();
-    }
 }

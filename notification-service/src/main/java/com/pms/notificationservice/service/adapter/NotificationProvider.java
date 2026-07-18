@@ -1,9 +1,9 @@
 package com.pms.notificationservice.service.adapter;
 
-import com.pms.notificationservice.dto.request.NotificationRequest;
+import com.pms.notificationservice.dto.event.NotificationMessage;
 import com.pms.notificationservice.model.NotificationChannel;
 
 public interface NotificationProvider {
     NotificationChannel supportedChannel();
-    void send(NotificationRequest request);
+    void send(NotificationMessage request);
 }

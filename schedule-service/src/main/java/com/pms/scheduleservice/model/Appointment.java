@@ -25,6 +25,8 @@ public class Appointment {
 
     private String doctorId;
     private String doctorName;
+    private String hospitalId;
+    private String hospitalName;
 
     @NotNull
     private String timeSlotId;
@@ -110,6 +112,22 @@ public class Appointment {
 
     public void setDoctorName(String doctorName) {
         this.doctorName = doctorName;
+    }
+
+    public String getHospitalId() {
+        return hospitalId;
+    }
+
+    public void setHospitalId(String hospitalId) {
+        this.hospitalId = hospitalId;
+    }
+
+    public String getHospitalName() {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName) {
+        this.hospitalName = hospitalName;
     }
 
     public String getTimeSlotId() {

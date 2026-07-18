@@ -1,9 +1,9 @@
 package com.pms.notificationservice.service;
 
+import com.pms.notificationservice.dto.event.ConsentOtpNotification;
 import com.pms.notificationservice.dto.event.OtpNotificationContext;
 import com.pms.notificationservice.dto.response.OtpVerifyResult;
 import com.pms.notificationservice.exception.OtpCoolDownException;
-import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.model.Otp;
@@ -98,20 +98,20 @@ public class OtpService {
         String redisKey = REDIS_KEY_PREFIX + otp.getId().toString();
         redisTemplate.opsForValue().set(redisKey, code, OTP_TTL_SECONDS, TimeUnit.SECONDS);
 
-        String message = String.format(
-                "your consent verfication code is: %s . Valid for 2 minutes" +
-                        "if you did not request this, please ignore.", code
-        );
-
         for(NotificationChannel channel: channelRouter.resolve(NotificationType.CONSENT_OTP)){
-            NotificationRequest request = new NotificationRequest(
+            var request = new ConsentOtpNotification(
                     otp.getId().toString(),
                     domainKey,
                     NotificationType.CONSENT_OTP,
                     channel,
                     phoneNumber,
-                    message,
-                    Map.of()
+                    String.format(
+                            "your consent verification code is: %s . Valid for 2 minutes" +
+                                    "if you did not request this, please ignore.", code
+                    ),
+                    code,
+                    domainKey,
+                    "consent"
             );
             notificationService.sendNotification(request);
         }
@@ -276,8 +276,7 @@ public class OtpService {
         );
 
         for(NotificationChannel channel : channelRouter.resolve(type)){
-            NotificationRequest request = template.createRequest(ctx, channel);
-            notificationService.sendNotification(request);
+            notificationService.sendNotification(template.createRequest(ctx, channel));
         }
     }
 

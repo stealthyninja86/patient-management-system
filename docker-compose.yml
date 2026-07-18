@@ -447,6 +447,14 @@ services:
     restart: unless-stopped
     ports:
       - "4014:4014"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        export SMTP_API_KEY=$(cat /run/secrets/mailtrap_api_key)
+        exec java -jar app.jar
+    secrets:
+      - mailtrap_api_key
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://notification-service-db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
@@ -615,6 +623,8 @@ services:
 secrets:
   openai_api_key:
     file: ./secrets/ollama_api_key.txt
+  mailtrap_api_key:
+    file: ./secrets/mailtrap_api_key.txt
 
 volumes:
   grafana_data:

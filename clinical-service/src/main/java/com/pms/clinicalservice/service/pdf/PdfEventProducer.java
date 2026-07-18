@@ -28,11 +28,13 @@ public class PdfEventProducer {
         this.objectMapper = objectMapper;
     }
 
-    public void sendPdfGeneratedEvent(String prescriptionId, String patientId, String patientEmail,
-                                       String doctorId, String hospitalId, String status) {
+    public void sendPdfGeneratedEvent(String prescriptionId, String patientId, String patientName,
+                                       String patientEmail, String doctorId, String doctorName,
+                                       String hospitalId, String hospitalName, String status) {
         try {
             PrescriptionPdfGeneratedEvent event = new PrescriptionPdfGeneratedEvent(
-                prescriptionId, patientId, patientEmail, doctorId, hospitalId, status);
+                prescriptionId, patientId, patientName, patientEmail,
+                doctorId, doctorName, hospitalId, hospitalName, status);
             String payload = objectMapper.writeValueAsString(event);
             OutboxEvent outboxEvent = new OutboxEvent(
                 UUID.randomUUID(),

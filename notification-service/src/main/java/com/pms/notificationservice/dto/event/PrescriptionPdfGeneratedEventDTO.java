@@ -6,7 +6,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record PrescriptionPdfGeneratedEventDTO (
     String prescriptionId,
     String patientId,
+    String patientName,
+    String doctorName,
+    String hospitalName,
     String patientEmail,
-    String status
+    String status,
+    String doctorId,
+    String hospitalId
 ) {
 }

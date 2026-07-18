@@ -37,16 +37,29 @@ public class PrescriptionPdfGeneratedEvent {
     @JsonProperty("patientEmail")
     private String patientEmail;
 
+    @JsonProperty("patientName")
+    private String patientName;
+
+    @JsonProperty("doctorName")
+    private String doctorName;
+
+    @JsonProperty("hospitalName")
+    private String hospitalName;
+
     public PrescriptionPdfGeneratedEvent() {}
 
-    public PrescriptionPdfGeneratedEvent(String prescriptionId, String patientId, String patientEmail,
-                                          String doctorId, String hospitalId, String status) {
+    public PrescriptionPdfGeneratedEvent(String prescriptionId, String patientId, String patientName,
+                                          String patientEmail, String doctorId, String doctorName,
+                                          String hospitalId, String hospitalName, String status) {
         this.eventId = UUID.randomUUID().toString();
         this.prescriptionId = prescriptionId;
         this.patientId = patientId;
+        this.patientName = patientName;
         this.patientEmail = patientEmail;
         this.doctorId = doctorId;
+        this.doctorName = doctorName;
         this.hospitalId = hospitalId;
+        this.hospitalName = hospitalName;
         this.status = status;
         this.generatedAt = Instant.now();
         this.eventType = "PRESCRIPTION_PDF_GENERATED";
@@ -59,6 +72,30 @@ public class PrescriptionPdfGeneratedEvent {
 
     public void setPatientEmail(String patientEmail) {
         this.patientEmail = patientEmail;
+    }
+
+    public String getPatientName() {
+        return patientName;
+    }
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
+    }
+
+    public String getHospitalName() {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName) {
+        this.hospitalName = hospitalName;
     }
 
     public String getEventId() {

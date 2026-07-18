@@ -237,7 +237,11 @@ public class AppointmentService {
 
     private void writeOutboxEvent(Appointment appointment, String eventType, String appointmentDate) {
         try {
-            AppointmentEventDTO dto = appointmentMapper.toEventDTO(appointment, eventType, null, null, null, appointmentDate);
+            AppointmentEventDTO dto = appointmentMapper.toEventDTO(appointment, eventType,
+                    appointment.getPatientPhone(),
+                    appointment.getHospitalId(),
+                    appointment.getHospitalName(),
+                    appointmentDate);
             String payload = objectMapper.writeValueAsString(dto);
             OutboxEvent outboxEvent = new OutboxEvent(
                 UUID.randomUUID(),

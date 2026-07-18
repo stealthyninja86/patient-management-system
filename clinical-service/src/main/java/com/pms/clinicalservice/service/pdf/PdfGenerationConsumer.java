@@ -120,9 +120,12 @@ public class PdfGenerationConsumer {
             eventProducer.sendPdfGeneratedEvent(
                 prescription.getPrescriptionId(),
                 prescription.getPatientId(),
+                prescription.getPatientName(),
                 prescription.getPatientEmail(),
                 prescription.getDoctorId(),
+                prescription.getDoctorName(),
                 prescription.getHospitalId(),
+                prescription.getHospitalName(),
                 "SUCCESS"
             );
 
@@ -146,6 +149,6 @@ public class PdfGenerationConsumer {
             doc.setStatus(DocumentStatus.FAILED);
             documentRepository.save(doc);
         });
-        eventProducer.sendPdfGeneratedEvent(prescriptionId,"","","", "","FAILED");
+        eventProducer.sendPdfGeneratedEvent(prescriptionId, "", "", "", "", "", "", "", "FAILED");
     }
 }
