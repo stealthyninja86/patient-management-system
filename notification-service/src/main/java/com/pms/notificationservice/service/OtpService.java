@@ -248,7 +248,7 @@ public class OtpService {
             throw new OtpCoolDownException("please wait " + ttl + "'s before requesting a new code");
         }
 
-        String globalAttemptsKey = "otp:attempts-global" + domainKey;
+        String globalAttemptsKey = "otp:attempts-global:" + domainKey;
         String globalstr = redisTemplate.opsForValue().get(globalAttemptsKey);
         int globalAttempts = globalstr != null ? Integer.parseInt(globalstr) : 0;
 

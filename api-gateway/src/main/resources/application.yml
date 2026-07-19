@@ -1,8 +1,56 @@
 server:
   port: 4004
 
+auth:
+  service:
+    url: http://auth-service:4005
+
 spring:
-  cloud:
-    gateway:
-      mvc:
-        routes:
+  application:
+    name: api-gateway
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka:password@eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, info
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+otel:
+  service.name: ${spring.application.name}
+  traces:
+    exporter: zipkin
+  exporter:
+    zipkin:
+      endpoint: http://zipkin:9411/api/v2/spans
+  propagation:
+    type: w3c  # W3C tracecontext
+  logs:
+    exporter: none
+  instrumentation:
+    kafka:
+      enabled: true  # Propagate trace across Kafka messages
+    grpc:
+      enabled: true  # Propagate trace across gRPC calls
+    logback-mdc:
+      enabled: true
+
+logging:
+  structured:
+    format:
+      console: logstash
+    logstash:
+      mdc-fields-include: trace_id,span_id,trace_flags

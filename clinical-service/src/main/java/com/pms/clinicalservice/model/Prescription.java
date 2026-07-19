@@ -45,7 +45,7 @@ public class Prescription {
     @Column(unique = true)
     private String idempotencyKey;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "prescription_drugs")
     private List<Drug> drugs;
 

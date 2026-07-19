@@ -5,7 +5,8 @@ import com.pms.notificationservice.model.NotificationType;
 
 public sealed interface NotificationMessage
         permits AppointmentConfirmationNotification, AppointmentReminderNotification,
-                ConsentOtpNotification, PrescriptionReadyNotification {
+                ConsentOtpNotification, PrescriptionReadyNotification,
+                UserOnboardingNotification {
 
     String eventId();
     String patientId();

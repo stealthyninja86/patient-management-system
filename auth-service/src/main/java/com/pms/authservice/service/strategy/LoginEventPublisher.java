@@ -1,6 +1,9 @@
 package com.pms.authservice.service.strategy;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pms.authservice.dto.event.LoginEvent;
+import com.pms.authservice.model.OutboxEvent;
+import com.pms.authservice.repository.OutboxRepository;
 import com.pms.authservice.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,15 +14,21 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Component
 public class LoginEventPublisher implements ApplicationListener<AuthenticationSuccessEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(LoginEventPublisher.class);
     private final UserRepository userRepository;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
-    public LoginEventPublisher(UserRepository userRepository) {
+    public LoginEventPublisher(UserRepository userRepository, OutboxRepository outboxRepository, ObjectMapper objectMapper) {
         this.userRepository = userRepository;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -41,9 +50,28 @@ public class LoginEventPublisher implements ApplicationListener<AuthenticationSu
                     getClientIP(event)
             );
 
-            log.info("login event: email={} , role={}, timestamp={}", loginEvent.email(), loginEvent.role(), loginEvent.timestamp());
-        });
+            log.info("Login event: email={}, role={}, timestamp={}", loginEvent.email(), loginEvent.role(), loginEvent.timestamp());
 
+            try {
+                String payload = objectMapper.writeValueAsString(loginEvent);
+                OutboxEvent outboxEvent = new OutboxEvent(
+                    UUID.randomUUID(),
+                    "USER_LOGIN",
+                    user.getEmail(),
+                    "LOGIN_EVENT",
+                    "user-login",
+                    payload,
+                    user.getEmail(),
+                    false,
+                    LocalDateTime.now(),
+                    null
+                );
+                outboxRepository.save(outboxEvent);
+                log.debug("Login outbox event saved for {}", user.getEmail());
+            } catch (Exception e) {
+                log.error("Failed to write login outbox event", e);
+            }
+        });
     }
 
     private String getClientIP(AuthenticationSuccessEvent event) {

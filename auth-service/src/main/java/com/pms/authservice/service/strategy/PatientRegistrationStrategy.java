@@ -67,8 +67,13 @@ public class PatientRegistrationStrategy implements RegistrationStrategy<Patient
             return userMapper.toPatientResponse(user, patientResponse.getPatientId());
         }
         catch (Exception e) {
-            saga.compensate();
-            throw new RuntimeException(e);
+            try {
+                saga.compensate();
+            } catch (Exception compensateEx) {
+                log.error("Compensation also failed for patient registration: {}", request.email(), compensateEx);
+                e.addSuppressed(compensateEx);
+            }
+            throw new RuntimeException("Registration failed for patient: " + request.email(), e);
         }
     }
 

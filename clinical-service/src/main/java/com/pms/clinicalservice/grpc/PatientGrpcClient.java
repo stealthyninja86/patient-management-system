@@ -1,5 +1,6 @@
 package com.pms.clinicalservice.grpc;
 
+import com.pms.clinicalservice.exception.ServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.slf4j.Logger;
@@ -27,9 +28,7 @@ public class PatientGrpcClient {
     }
 
     private PatientResponse getPatientByIdFallback(String patientId, Throwable throwable) {
-        log.warn("Circuit breaker OPEN for patientService. Patient ID: {} , error: {}", patientId, throwable.getMessage());
-        return PatientResponse.newBuilder()
-                .setPatientId(patientId)
-                .build();
+        log.error("Circuit breaker OPEN for patientService. Patient ID: {} , error: {}", patientId, throwable.getMessage());
+        throw new ServiceUnavailableException("Patient service is currently unavailable. Please try again.");
     }
 }
