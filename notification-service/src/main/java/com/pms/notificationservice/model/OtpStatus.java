@@ -4,5 +4,6 @@ public enum OtpStatus {
     GENERATED,
     VERIFIED,
     EXPIRED,
-    LOCKED
+    LOCKED,
+    MISMATCH
 }

@@ -48,9 +48,16 @@ public class PatientController {
         return ResponseEntity.ok(patientFacade.updatePatient(id, dto));
     }
 
-    @GetMapping("/by-patient-id")
+    @GetMapping("/{patientId}")
     @Operation(summary = "Get Patient by patientId")
-    public ResponseEntity<PatientResponseDTO> getPatientByPatientId(@RequestParam String patientId) {
+    public ResponseEntity<PatientResponseDTO> getPatientByPatientId(@PathVariable String patientId) {
+        log.info("REST request to get patient by patientId: {}", patientId);
+        return ResponseEntity.ok(patientFacade.getPatientByPatientId(patientId));
+    }
+
+    @GetMapping("/by-patient-id")
+    @Operation(summary = "Get Patient by patientId (query param)")
+    public ResponseEntity<PatientResponseDTO> getPatientByPatientIdQuery(@RequestParam String patientId) {
         log.info("REST request to get patient by patientId: {}", patientId);
         return ResponseEntity.ok(patientFacade.getPatientByPatientId(patientId));
     }

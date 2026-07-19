@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Booking Code - Orbit</title>
+    <style type="text/css">
+        @media only screen and (max-width: 620px) {
+            .container { width: 100% !important; }
+            .content { padding: 24px 20px !important; }
+            .header { padding: 20px 20px !important; }
+            .footer { padding: 16px 20px !important; }
+            h2 { font-size: 18px !important; }
+            .body-text { font-size: 14px !important; }
+
+            .otp-code { font-size: 30px !important; letter-spacing: 6px !important; }
+        }
+        @media only screen and (max-width: 480px) {
+            .content { padding: 20px 16px !important; }
+            .header { padding: 16px 16px !important; }
+            .footer { padding: 14px 16px !important; }
+            h2 { font-size: 17px !important; }
+            .body-text { font-size: 13px !important; }
+            .footer-text { font-size: 11px !important; }
+            .otp-code { font-size: 26px !important; letter-spacing: 5px !important; }
+            .otp-box { padding: 16px !important; }
+        }
+    </style>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9;">
+        <tr>
+            <td align="center" style="padding:24px 0;">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" class="container" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                    <tr>
+                        <td class="header" style="background:linear-gradient(135deg,#2D1B69,#1a0a3e);padding:24px 40px;text-align:center;">
+                            <img src="cid:logo" alt="Orbit" width="40" height="40" style="display:inline-block;vertical-align:middle;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="content" style="padding:32px 40px;text-align:center;">
+                            <h2 style="color:#2D1B69;font-size:20px;margin:0 0 8px 0;">Booking Verification Code</h2>
+                            <p style="color:#6c757d;font-size:14px;margin:0 0 24px 0;">Use this code to confirm your appointment</p>
+                            <div class="otp-box" style="background-color:#F5F0FF;border-radius:12px;padding:24px;margin:0 0 24px 0;display:inline-block;border:2px dashed #D4C5F9;">
+                                <span class="otp-code" style="font-size:36px;font-weight:700;letter-spacing:8px;color:#2D1B69;" th:text="${code}">000000</span>
+                            </div>
+                            <p class="body-text" style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 16px 0;">Enter this code in the app to confirm your appointment booking.</p>
+                            <p style="color:#dc3545;font-size:13px;margin:0 0 4px 0;"><strong>Valid for 3 minutes.</strong></p>
+                            <p style="color:#6c757d;font-size:13px;margin:0;">If you did not request this, please ignore this email.</p>
+                            <hr style="border:none;border-top:1px solid #e9ecef;margin:24px 0;">
+                            <p style="color:#333333;font-size:14px;margin:0;">Best regards,<br><strong style="color:#4A2C8D;">Orbit Team</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="footer" style="background-color:#f8f9fa;padding:20px 40px;border-top:1px solid #e9ecef;">
+                            <p class="footer-text" style="color:#6c757d;font-size:12px;margin:0 0 4px 0;">This is an automated message from <strong style="color:#4A2C8D;">Orbit</strong>.</p>
+                            <p class="footer-text" style="color:#6c757d;font-size:12px;margin:0;">If you did not request this email, please ignore it.</p>
+                            <p style="color:#adb5bd;font-size:11px;margin:8px 0 0 0;">&copy; 2026 Orbit. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

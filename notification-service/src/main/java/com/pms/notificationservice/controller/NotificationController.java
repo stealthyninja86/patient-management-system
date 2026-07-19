@@ -4,6 +4,7 @@ import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.dto.response.NotificationResponseDTO;
 import com.pms.notificationservice.dto.response.SendNotificationResponseDTO;
 import com.pms.notificationservice.service.facade.NotificationFacade;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class NotificationController {
 
     @PostMapping("/send")
     public ResponseEntity<SendNotificationResponseDTO> sendNotification(
-            @RequestBody NotificationRequest request
+            @Valid @RequestBody NotificationRequest request
     ){
         boolean sent = notificationFacade.sendNotification(request);
         return ResponseEntity.ok(new SendNotificationResponseDTO(

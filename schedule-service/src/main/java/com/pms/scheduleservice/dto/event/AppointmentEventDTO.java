@@ -16,5 +16,7 @@ public record AppointmentEventDTO(
     String hospitalName,
     String timeSlotId,
     String status,
-    String appointmentDate
+    String appointmentDate,
+    String startTime,
+    String endTime
 ) {}

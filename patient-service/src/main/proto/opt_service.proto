@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package notification;
+
+service OtpService {
+  rpc VerifyOtp (VerifyOtpRequest) returns (VerifyOtpResponse);
+  rpc GenerateOtp (GenerateOtpRequest) returns (GenerateOtpResponse);
+}
+
+message GenerateOtpRequest {
+  string domain_key = 1;
+  string phone_number = 2;
+  string email = 3;
+  string notification_type = 4;
+}
+
+message GenerateOtpResponse{
+  bool success = 1;
+  int32 ttl_seconds = 2;
+}
+
+message VerifyOtpRequest{
+  string domain_key = 1;
+  string code = 2;
+}
+
+message VerifyOtpResponse{
+  bool verified = 1;
+  string status = 2;
+  int32 attempts_remaining = 3;
+}

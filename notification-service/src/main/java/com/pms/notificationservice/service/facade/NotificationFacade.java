@@ -34,7 +34,7 @@ public class NotificationFacade {
     }
 
     public boolean sendNotification(NotificationRequest request) {
-        return notificationService.sendNotification(request);
+        return notificationService.sendNotification(notificationMapper.toMessage(request));
     }
 
     public List<NotificationResponseDTO> getPatientNotificationHistory(String patientId) {
@@ -45,11 +45,10 @@ public class NotificationFacade {
     }
 
     public OtpGenerateResponseDTO generateOtp(OtpGenerateRequestDTO request) {
-        if (request.patientId() == null || request.doctorId() == null || request.phoneNumber() == null) {
-            return new OtpGenerateResponseDTO(null, "patientId, doctorId, and phoneNumber are required");
+        if (request.domainKey() == null || request.phoneNumber() == null) {
+            return new OtpGenerateResponseDTO(null, "domainKey and phoneNumber are required");
         }
-        UUID otpId = otpService.generateOtp(request.patientId(), request.doctorId(),
-                request.hospitalId(), request.consentRequestId(), request.phoneNumber());
+        UUID otpId = otpService.generateOtp(request.domainKey(), request.phoneNumber());
         return new OtpGenerateResponseDTO(otpId.toString(), "OTP generated successfully");
     }
 

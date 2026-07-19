@@ -15,22 +15,11 @@ public class AuthIntegrationTests {
 
     @Test
     public void shouldReturnOkWithValidToken() {
-        //Arrange
-        //act
-        //assert
-
-        String loginPayload = """
-                {
-                    "email": "test@test.com",
-                    "password": "password123"
-                }
-                """;
-
         Response response = given()
                 .contentType("application/json")
-                .body(loginPayload)
+                .body("{\"email\":\"doctor@test.com\"}")
                 .when()
-                .post("/auth/login")
+                .post("/token")
                 .then()
                 .statusCode(200)
                 .body("token", notNullValue())
@@ -42,24 +31,12 @@ public class AuthIntegrationTests {
 
     @Test
     public void shouldReturnUnauthorizedOnInvalidToken() {
-        //Arrange
-        //act
-        //assert
-
-        String loginPayload = """
-                {
-                    "email": "test@test.com",
-                    "password": "password123"
-                }
-                """;
-
         given()
                 .contentType("application/json")
-                .body(loginPayload)
+                .body("{\"email\":\"nonexistent@test.com\"}")
                 .when()
-                .post("/auth/login")
+                .post("/token")
                 .then()
-                .statusCode(400);
-
+                .statusCode(401);
     }
 }

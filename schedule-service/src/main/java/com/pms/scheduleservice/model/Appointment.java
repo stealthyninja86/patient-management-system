@@ -20,10 +20,13 @@ public class Appointment {
     private String patientId;
 
     private String patientName;
+    private String patientPhone;
     private String patientEmail;
 
     private String doctorId;
     private String doctorName;
+    private String hospitalId;
+    private String hospitalName;
 
     @NotNull
     private String timeSlotId;
@@ -44,7 +47,15 @@ public class Appointment {
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
-        if (status == null) status = AppointmentStatus.BOOKED;
+        if (status == null) status = AppointmentStatus.PENDING_OTP;
+    }
+
+    public String getPatientPhone() {
+        return patientPhone;
+    }
+
+    public void setPatientPhone(String patientPhone) {
+        this.patientPhone = patientPhone;
     }
 
     public UUID getId() {
@@ -103,6 +114,22 @@ public class Appointment {
         this.doctorName = doctorName;
     }
 
+    public String getHospitalId() {
+        return hospitalId;
+    }
+
+    public void setHospitalId(String hospitalId) {
+        this.hospitalId = hospitalId;
+    }
+
+    public String getHospitalName() {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName) {
+        this.hospitalName = hospitalName;
+    }
+
     public String getTimeSlotId() {
         return timeSlotId;
     }
@@ -142,4 +169,5 @@ public class Appointment {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
 }

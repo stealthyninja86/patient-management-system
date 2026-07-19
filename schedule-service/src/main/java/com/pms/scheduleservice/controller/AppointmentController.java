@@ -1,10 +1,13 @@
 package com.pms.scheduleservice.controller;
 
 import com.pms.scheduleservice.dto.request.AppointmentRequestDTO;
+import com.pms.scheduleservice.dto.request.ConfirmAppointmentRequestDTO;
 import com.pms.scheduleservice.dto.response.AppointmentResponseDTO;
 import com.pms.scheduleservice.dto.response.DoctorPatientDTO;
 import com.pms.scheduleservice.dto.request.RescheduleRequestDTO;
+import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.service.facade.AppointmentFacade;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -12,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/appointments")
@@ -56,16 +60,31 @@ public class AppointmentController {
     }
 
     @PostMapping
-    public ResponseEntity<AppointmentResponseDTO> createAppointment(@RequestBody AppointmentRequestDTO request) {
+    public ResponseEntity<Map<String, Object>> createAppointment(@RequestBody @Valid AppointmentRequestDTO request) {
         log.info("REST request to create appointment for patient: {}, timeSlot: {}", request.patientId(), request.timeSlotId());
-        AppointmentResponseDTO response = appointmentFacade.createAppointment(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        String appointmentId = appointmentFacade.initBooking(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                Map.of("appointmentId", appointmentId, "message", "OTP sent to registered phone/email")
+        );
     }
 
     @PostMapping("/{id}/start")
-    public ResponseEntity<AppointmentResponseDTO> startAppointment(@PathVariable String id) {
-        log.info("REST request to start appointment: {}", id);
-        return ResponseEntity.ok(appointmentFacade.startAppointment(id));
+    public ResponseEntity<Map<String, Object>> startAppointment(@PathVariable String id) {
+        log.info("REST request to initiate start for appointment: {}", id);
+        appointmentFacade.initStart(id);
+        return ResponseEntity.ok(Map.of("message", "OTP sent to registered phone/email"));
+    }
+
+    @PostMapping("/{id}/start/confirm")
+    public ResponseEntity<AppointmentResponseDTO> confirmStart(
+            @PathVariable String id,
+            @RequestBody @Valid ConfirmAppointmentRequestDTO request) {
+        log.info("REST request to confirm start for appointment: {}", id);
+        AppointmentResponseDTO result = appointmentFacade.confirmStart(id, request.code());
+        if (result.status() == AppointmentStatus.CANCELLED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(result);
+        }
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/{id}/complete")
@@ -99,5 +118,22 @@ public class AppointmentController {
         log.info("REST request to delete appointment: {}", id);
         appointmentFacade.deleteAppointment(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/confirm")
+    public ResponseEntity<AppointmentResponseDTO> confirmAppointment(
+            @PathVariable String id,
+            @RequestBody @Valid ConfirmAppointmentRequestDTO request) {
+        AppointmentResponseDTO result = appointmentFacade.confirmBooking(id, request.code());
+        if (result.status() == AppointmentStatus.CANCELLED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(result);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/{id}/confirm-dev")
+    public ResponseEntity<AppointmentResponseDTO> confirmAppointmentDev(@PathVariable String id) {
+        log.info("Dev bypass: confirming appointment {} without OTP", id);
+        return ResponseEntity.ok(appointmentFacade.confirmBookingDev(id));
     }
 }

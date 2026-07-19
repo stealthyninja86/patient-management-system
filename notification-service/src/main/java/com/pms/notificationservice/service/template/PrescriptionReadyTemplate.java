@@ -1,5 +1,7 @@
 package com.pms.notificationservice.service.template;
 
+import com.pms.notificationservice.dto.event.NotificationMessage;
+import com.pms.notificationservice.dto.event.PrescriptionReadyNotification;
 import com.pms.notificationservice.dto.event.PrescriptionPdfGeneratedEventDTO;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
@@ -7,6 +9,22 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PrescriptionReadyTemplate extends NotificationMessageTemplate<PrescriptionPdfGeneratedEventDTO> {
+
+    @Override
+    public NotificationMessage createRequest(PrescriptionPdfGeneratedEventDTO event, NotificationChannel channel) {
+        return new PrescriptionReadyNotification(
+                buildDedupKey(event, channel),
+                event.patientId(),
+                event.patientName(),
+                event.doctorName(),
+                event.hospitalName(),
+                event.prescriptionId(),
+                NotificationType.PRESCRIPTION_READY,
+                channel,
+                resolveRecipient(event, channel),
+                buildMessage(event, channel)
+        );
+    }
 
     @Override
     public NotificationType getNotificationType() {

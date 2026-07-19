@@ -1,6 +1,6 @@
 package com.pms.notificationservice.service.adapter;
 
-import com.pms.notificationservice.dto.request.NotificationRequest;
+import com.pms.notificationservice.dto.event.NotificationMessage;
 import com.pms.notificationservice.model.NotificationChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ public class SmsChannel implements NotificationProvider {
     }
 
     @Override
-    public void send(NotificationRequest request) {
-        log.info("📱[SMS MOCK] sending notification to: {} , message {}", request.recipient(), request.message());
+    public void send(NotificationMessage notification) {
+        log.info("[SMS MOCK] sending notification to: {} , type: {}", notification.recipient(), notification.type());
     }
 }

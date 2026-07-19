@@ -18,6 +18,8 @@ public class TimeSlotMapper {
         timeSlot.setTimeSlotId(timeSlotId);
         timeSlot.setDoctorId(request.doctorId());
         timeSlot.setDoctorName(doctorName);
+        timeSlot.setHospitalId(request.hospitalId());
+        timeSlot.setHospitalName(request.hospitalName());
         timeSlot.setStartTime(request.startTime());
         timeSlot.setEndTime(request.endTime());
         return timeSlot;
@@ -31,7 +33,9 @@ public class TimeSlotMapper {
             timeSlot.getDoctorName(),
             timeSlot.getStartTime(),
             timeSlot.getEndTime(),
-            status
+            status,
+            timeSlot.getHospitalId(),
+            timeSlot.getHospitalName()
         );
     }
 

@@ -131,13 +131,13 @@ services:
     networks:
       - internal
 
-  # Analytics Service
-  analytics-service:
-    image: analytics-service:latest
+  # timeline Service
+  timeline-service:
+    image: timeline-service:latest
     build:
-      context: ./analytics-service
+      context: ./timeline-service
       dockerfile: Dockerfile
-    container_name: analytics-service
+    container_name: timeline-service
     ports:
       - "4002:4002"
     environment:
@@ -351,7 +351,7 @@ services:
 
   # SearXNG (privacy-respecting metasearch engine)
   searxng:
-    image: searxng:latest
+    image: searxng/searxng:latest
     container_name: searxng
     ports:
       - "8888:8080"
@@ -447,6 +447,14 @@ services:
     restart: unless-stopped
     ports:
       - "4014:4014"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        export SMTP_API_KEY=$(cat /run/secrets/mailtrap_api_key)
+        exec java -jar app.jar
+    secrets:
+      - mailtrap_api_key
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://notification-service-db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
@@ -468,6 +476,22 @@ services:
         gelf-address: "udp://logstash:5000"
     networks:
       - internal
+
+  timeline-db:
+    image: mongo:latest
+    container_name: timeline-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./timeline-service/timeline-db:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | monogosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
 
   zipkin:
     image: openzipkin/zipkin:3.4.2
@@ -599,6 +623,8 @@ services:
 secrets:
   openai_api_key:
     file: ./secrets/ollama_api_key.txt
+  mailtrap_api_key:
+    file: ./secrets/mailtrap_api_key.txt
 
 volumes:
   grafana_data:

@@ -20,6 +20,8 @@ public class ChannelRouter {
         strategyMap = new EnumMap<>(NotificationType.class);
         strategyMap.put(NotificationType.APPOINTMENT_CONFIRMATION, appointmentChannelStrategy);
         strategyMap.put(NotificationType.PRESCRIPTION_READY, prescriptionChannelStrategy);
+        strategyMap.put(NotificationType.APPOINTMENT_BOOKING, otpChannelStrategy);
+        strategyMap.put(NotificationType.APPOINTMENT_START, otpChannelStrategy);
         strategyMap.put(NotificationType.CONSENT_OTP, otpChannelStrategy);
     }
 

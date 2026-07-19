@@ -3,10 +3,15 @@ package com.pms.scheduleservice.service.facade;
 import com.pms.scheduleservice.dto.request.AppointmentRequestDTO;
 import com.pms.scheduleservice.dto.response.AppointmentResponseDTO;
 import com.pms.scheduleservice.dto.response.DoctorPatientDTO;
+import com.pms.scheduleservice.grpc.OtpGrpcClient;
+import com.pms.scheduleservice.model.Appointment;
+import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.service.AppointmentService;
+import notification.OptService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,9 +21,12 @@ public class AppointmentFacade {
     private static final Logger log = LoggerFactory.getLogger(AppointmentFacade.class);
 
     private final AppointmentService appointmentService;
+    private final OtpGrpcClient otpGrpcClient;
 
-    public AppointmentFacade(AppointmentService appointmentService) {
+    public AppointmentFacade(AppointmentService appointmentService,
+                             OtpGrpcClient otpGrpcClient) {
         this.appointmentService = appointmentService;
+        this.otpGrpcClient = otpGrpcClient;
     }
 
     public List<AppointmentResponseDTO> getAllAppointments() {
@@ -44,11 +52,6 @@ public class AppointmentFacade {
     public List<DoctorPatientDTO> getPatientsByDoctor(String doctorId) {
         log.debug("Fetching patients by doctor via facade: {}", doctorId);
         return appointmentService.getPatientsByDoctor(doctorId);
-    }
-
-    public AppointmentResponseDTO createAppointment(AppointmentRequestDTO request) {
-        log.debug("Creating appointment via facade for patient: {}, timeSlot: {}", request.patientId(), request.timeSlotId());
-        return appointmentService.createAppointment(request);
     }
 
     public AppointmentResponseDTO startAppointment(String appointmentId) {
@@ -79,5 +82,87 @@ public class AppointmentFacade {
     public void deleteAppointment(String appointmentId) {
         log.debug("Deleting appointment via facade: {}", appointmentId);
         appointmentService.deleteAppointment(appointmentId);
+    }
+
+    @Transactional
+    public String initBooking(AppointmentRequestDTO request) {
+        log.debug("Initiating booking via facade for patient: {}, timeSlot: {}", request.patientId(), request.timeSlotId());
+        Appointment appointment = appointmentService.createAppointmentEntity(request);
+
+        OptService.GenerateOtpRequest otpRequest = OptService.GenerateOtpRequest.newBuilder()
+                .setDomainKey("booking:" + appointment.getAppointmentId())
+                .setPhoneNumber(appointment.getPatientPhone())
+                .setEmail(appointment.getPatientEmail())
+                .setNotificationType("APPOINTMENT_BOOKING")
+                .build();
+
+        otpGrpcClient.generateOtp(otpRequest);
+
+        return appointment.getAppointmentId();
+    }
+
+    public AppointmentResponseDTO confirmBooking(String appointmentId, String code) {
+        log.debug("Confirming booking via facade for appointment: {}", appointmentId);
+
+        OptService.VerifyOtpRequest verifyRequest = OptService.VerifyOtpRequest.newBuilder()
+                .setDomainKey("booking:" + appointmentId)
+                .setCode(code)
+                .build();
+
+        OptService.VerifyOtpResponse verifyResponse = otpGrpcClient.verifyOtp(verifyRequest);
+        boolean verified = verifyResponse.getVerified();
+        String status = verifyResponse.getStatus();
+
+        if (!verified) {
+            if ("LOCKED".equals(status) || "EXPIRED".equals(status)) {
+                return appointmentService.cancelAppointment(appointmentId);
+            }
+            return appointmentService.getAppointmentById(appointmentId);
+        }
+
+        return appointmentService.updateAppointmentStatus(appointmentId, AppointmentStatus.BOOKED);
+    }
+
+    public String initStart(String appointmentId) {
+        log.debug("Initiating start via facade for appointment: {}", appointmentId);
+        Appointment appointment = appointmentService.getAppointmentByIdEntity(appointmentId);
+
+        OptService.GenerateOtpRequest otpRequest = OptService.GenerateOtpRequest.newBuilder()
+                .setDomainKey("start:" + appointmentId)
+                .setPhoneNumber(appointment.getPatientPhone())
+                .setEmail(appointment.getPatientEmail())
+                .setNotificationType("APPOINTMENT_START")
+                .build();
+
+        otpGrpcClient.generateOtp(otpRequest);
+
+        return appointmentId;
+    }
+
+    public AppointmentResponseDTO confirmBookingDev(String appointmentId) {
+        log.debug("Dev bypass: confirming booking for appointment: {} (no OTP)", appointmentId);
+        return appointmentService.updateAppointmentStatus(appointmentId, AppointmentStatus.BOOKED);
+    }
+
+    public AppointmentResponseDTO confirmStart(String appointmentId, String code) {
+        log.debug("Confirming start via facade for appointment: {}", appointmentId);
+
+        OptService.VerifyOtpRequest verifyRequest = OptService.VerifyOtpRequest.newBuilder()
+                .setDomainKey("start:" + appointmentId)
+                .setCode(code)
+                .build();
+
+        OptService.VerifyOtpResponse verifyResponse = otpGrpcClient.verifyOtp(verifyRequest);
+        boolean verified = verifyResponse.getVerified();
+        String status = verifyResponse.getStatus();
+
+        if (!verified) {
+            if ("LOCKED".equals(status) || "EXPIRED".equals(status)) {
+                return appointmentService.cancelAppointment(appointmentId);
+            }
+            return appointmentService.getAppointmentById(appointmentId);
+        }
+
+        return appointmentService.startAppointment(appointmentId);
     }
 }

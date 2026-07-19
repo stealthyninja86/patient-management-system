@@ -1,7 +1,9 @@
 package com.pms.notificationservice.service;
 
-import com.pms.notificationservice.service.adapter.OtpNotificationTemplate;
-import com.pms.notificationservice.dto.request.NotificationRequest;
+import com.pms.notificationservice.dto.event.ConsentOtpNotification;
+import com.pms.notificationservice.dto.event.OtpNotificationContext;
+import com.pms.notificationservice.dto.response.OtpVerifyResult;
+import com.pms.notificationservice.exception.OtpCoolDownException;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.model.Otp;
@@ -10,17 +12,21 @@ import com.pms.notificationservice.repository.OtpRepository;
 import com.pms.notificationservice.service.factory.OtpCreator;
 import com.pms.notificationservice.service.metrics.MetricsService;
 import com.pms.notificationservice.service.strategy.ChannelRouter;
+import com.pms.notificationservice.service.template.NotificationMessageTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+
 
 @Service
 public class OtpService {
@@ -30,29 +36,43 @@ public class OtpService {
     private static final int OTP_TTL_SECONDS = 180;
     private static final int MAX_ATTEMPTS = 3;
     private static final String REDIS_KEY_PREFIX = "otp:";
+    private static final String OTP_HASH_SALT = "pms-otp-salt2026";
+    private final String LOCKED = OtpStatus.LOCKED.name();
+    private final String EXPIRED = OtpStatus.EXPIRED.name();
+    private final String VERIFIED = OtpStatus.VERIFIED.name();
+    private final String GENERATED = OtpStatus.GENERATED.name();
+    private final String MISMATCH = OtpStatus.MISMATCH.name();
+    private final String SMS = NotificationChannel.SMS.name();
+    private final String EMAIL = NotificationChannel.EMAIL.name();
 
     private final OtpRepository otpRepository;
     private final StringRedisTemplate redisTemplate;
-    private final OtpNotificationTemplate otpNotificationTemplate;
     private final ChannelRouter channelRouter;
     private final SecureRandom secureRandom;
     private final MetricsService metrics;
     private final OtpCreator otpFactory;
+    private final NotificationService notificationService;
+    private final Map<NotificationType, NotificationMessageTemplate<OtpNotificationContext>> otpTemplates;
 
     public OtpService(OtpRepository otpRepository,
                       StringRedisTemplate redisTemplate,
-                      OtpNotificationTemplate otpNotificationTemplate,
                       ChannelRouter channelRouter,
                       SecureRandom secureRandom,
                       MetricsService metrics,
-                      OtpCreator otpFactory) {
+                      OtpCreator otpFactory,
+                      NotificationService notificationService,
+                      List<NotificationMessageTemplate<OtpNotificationContext>> otpTemplates) {
         this.otpRepository = otpRepository;
         this.redisTemplate = redisTemplate;
-        this.otpNotificationTemplate = otpNotificationTemplate;
         this.channelRouter = channelRouter;
         this.secureRandom = secureRandom;
         this.metrics = metrics;
         this.otpFactory = otpFactory;
+        this.notificationService = notificationService;
+        this.otpTemplates = new HashMap<>();
+        for (NotificationMessageTemplate<OtpNotificationContext> t : otpTemplates) {
+            this.otpTemplates.put(t.getNotificationType(), t);
+        }
     }
 
     /**
@@ -63,45 +83,40 @@ public class OtpService {
      * Returns the otpId (not the code) so the verify endpoint can look it up.
      * The code is sent to the patient via SMS — never returned in the API response.
      *
-     * @param patientId  the patient requesting consent
-     * @param doctorId   the doctor requesting access
-     * @param hospitalId the facility where consent is requested
-     * @param consentRequestId  optional external tracking ID
+     * @param domainKey   purpose-prefixed domain identifier (e.g. "consent:<uuid>")
      * @param phoneNumber the patient's phone number for SMS delivery (not stored raw)
      * @return the generated OTP entity ID
      */
     @Transactional
-    public UUID generateOtp(String patientId, String doctorId,
-                            String hospitalId, String consentRequestId,
-                            String phoneNumber){
+    public UUID generateOtp(String domainKey, String phoneNumber) {
         Otp otp = otpFactory.createOtp(
-                patientId, doctorId, hospitalId, consentRequestId,
-                phoneNumber, Instant.now().plusSeconds(OTP_TTL_SECONDS));
+                domainKey, phoneNumber, Instant.now().plusSeconds(OTP_TTL_SECONDS));
         String code =  String.format("%06d", secureRandom.nextInt(1_000_000));
         otpRepository.save(otp);
-            metrics.recordOtpGenerated();
+        metrics.recordOtpGenerated();
 
         String redisKey = REDIS_KEY_PREFIX + otp.getId().toString();
         redisTemplate.opsForValue().set(redisKey, code, OTP_TTL_SECONDS, TimeUnit.SECONDS);
 
-        String message = String.format(
-                "your consent verfication code is: %s . Valid for 2 minutes" +
-                        "if you did not request this, please ignore.", code
-        );
-
         for(NotificationChannel channel: channelRouter.resolve(NotificationType.CONSENT_OTP)){
-            NotificationRequest request = new NotificationRequest(
+            var request = new ConsentOtpNotification(
                     otp.getId().toString(),
-                    patientId,
+                    domainKey,
                     NotificationType.CONSENT_OTP,
                     channel,
                     phoneNumber,
-                    message
-                    );
-            otpNotificationTemplate.send(request);
+                    String.format(
+                            "your consent verification code is: %s . Valid for 2 minutes" +
+                                    "if you did not request this, please ignore.", code
+                    ),
+                    code,
+                    domainKey,
+                    "consent"
+            );
+            notificationService.sendNotification(request);
         }
 
-        log.info("OTP generated: otpId={}, patientId={}, doctorId={}, code={}",  otp.getId().toString(), patientId, doctorId, code);
+        log.info("OTP generated: otpId={}, domainKey={}, code={}", otp.getId().toString(), domainKey, code);
         return otp.getId();
     }
 
@@ -214,6 +229,123 @@ public class OtpService {
         if(!staleOtps.isEmpty()){
             log.info("Expired {} stale otps left", staleOtps.size());
         }
+    }
+
+    String hashCode(String code){
+        try{
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest((code + OTP_HASH_SALT).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 not available",e);
+        }
+    }
+
+    public void generateOtpForDomain(String domainKey, String phoneNumber, String email, NotificationType type){
+        String coolDownKey = "otp:cooldown:" + domainKey;
+        if (redisTemplate.hasKey(coolDownKey)) {
+            long ttl = redisTemplate.getExpire(coolDownKey);
+            throw new OtpCoolDownException("please wait " + ttl + "'s before requesting a new code");
+        }
+
+        String globalAttemptsKey = "otp:attempts-global" + domainKey;
+        String globalstr = redisTemplate.opsForValue().get(globalAttemptsKey);
+        int globalAttempts = globalstr != null ? Integer.parseInt(globalstr) : 0;
+
+        if(globalAttempts >= MAX_ATTEMPTS){
+            throw  new OtpCoolDownException("Maximum verifcation attempts exceeded. Please try again later.");
+        }
+
+        String code = String.format("%06d", secureRandom.nextInt(1_000_000));
+        String codeHash = hashCode(code);
+
+        Map<String, String> otpData = new HashMap<>();
+        otpData.put("hash", codeHash);
+        otpData.put("status", GENERATED);
+        otpData.put("attempts", "0");
+        redisTemplate.opsForHash().putAll(domainKey, otpData);
+        redisTemplate.expire(domainKey, OTP_TTL_SECONDS, TimeUnit.SECONDS);
+
+        redisTemplate.opsForValue().set(coolDownKey, "1", 60, TimeUnit.SECONDS);
+        log.info("OTP generated: key = {}", domainKey);
+
+        // Look up the per-flow template and deliver via all resolved channels
+        NotificationMessageTemplate<OtpNotificationContext> template = otpTemplates.get(type);
+        OtpNotificationContext ctx = new OtpNotificationContext(
+                domainKey, phoneNumber, email, code
+        );
+
+        for(NotificationChannel channel : channelRouter.resolve(type)){
+            notificationService.sendNotification(template.createRequest(ctx, channel));
+        }
+    }
+
+    public OtpVerifyResult verifyOtpForDomain(String domainKey, String code){
+
+        Map<Object, Object> otpData = redisTemplate.opsForHash().entries(domainKey);
+        if(otpData.isEmpty()){
+            log.info("OTP is already expired");
+            return new OtpVerifyResult(false, EXPIRED, 0);
+        }
+
+        String status = (String) otpData.get("status");
+
+        if(status.equals(VERIFIED) || status.equals(LOCKED)){
+            log.info("OTP is already {}", status);
+            return new OtpVerifyResult(false, status, 0);
+        }
+
+        int attempts = Integer.parseInt((String) otpData.get("attempts"));
+
+        if (attempts >=  MAX_ATTEMPTS) {
+            redisTemplate.opsForHash().put(domainKey, "status", LOCKED);
+            log.info("attempts per opt exhausted: key = {}", domainKey);
+            return new OtpVerifyResult(false, LOCKED, 0);
+        }
+
+        String globalAttemptsKey = "otp:attempts-global:" + domainKey;
+        String globalstr = redisTemplate.opsForValue().get(globalAttemptsKey);
+        int globalAttempts = globalstr != null ? Integer.parseInt(globalstr) : 0;
+
+        if(globalAttempts >= MAX_ATTEMPTS){
+            redisTemplate.opsForHash().put(domainKey, "status", LOCKED);
+            log.info("global attemps exhausted: key = {}", domainKey);
+            return new OtpVerifyResult(false, LOCKED, 0);
+        }
+
+        String storedHash = (String) otpData.get("hash");
+        String inputHash = hashCode(code);
+
+        if(MessageDigest.isEqual(storedHash.getBytes(StandardCharsets.UTF_8),
+                inputHash.getBytes(StandardCharsets.UTF_8))){
+            redisTemplate.opsForHash().put(domainKey, "status", VERIFIED);
+            redisTemplate.delete("otp:cooldown:" + domainKey);
+            log.info("OTP verified: key = {}", domainKey);
+            return  new OtpVerifyResult(true, VERIFIED, 0);
+        }
+
+        attempts++;
+        redisTemplate.opsForHash().put(domainKey, "attempts", attempts);
+        redisTemplate.opsForValue().increment(globalAttemptsKey);
+
+        Long globalTtl = redisTemplate.getExpire(globalAttemptsKey);
+        if (globalTtl == null || globalTtl < 0){
+            redisTemplate.expire(globalAttemptsKey, 24, TimeUnit.HOURS);
+        }
+
+        int remainingAttempts = MAX_ATTEMPTS - attempts;
+        int remainingGlobalAttempts = MAX_ATTEMPTS - (globalAttempts + 1);
+
+        if(remainingAttempts <= 0 ||  remainingGlobalAttempts <= 0){
+            redisTemplate.opsForHash().put(domainKey, "status", LOCKED);
+            log.warn("attempts per opt exhausted: key = {}", domainKey);
+            return new OtpVerifyResult(false, LOCKED, 0);
+        }
+
+        log.warn("OTP mismatch: key = {}, attempts = {}/{}, global = {}/{}",
+                domainKey, attempts, MAX_ATTEMPTS, globalAttempts + 1, MAX_ATTEMPTS);
+
+        return new OtpVerifyResult(false, MISMATCH , remainingAttempts);
     }
 
 }

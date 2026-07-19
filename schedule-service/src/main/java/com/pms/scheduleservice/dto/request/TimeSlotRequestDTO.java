@@ -6,5 +6,7 @@ public record TimeSlotRequestDTO(
     String doctorId,
     String doctorName,
     LocalDateTime startTime,
-    LocalDateTime endTime
+    LocalDateTime endTime,
+    String hospitalId,
+    String hospitalName
 ) {}

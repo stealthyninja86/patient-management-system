@@ -12,13 +12,9 @@ import java.time.Instant;
 @Component
 public class OtpCreator {
 
-    public Otp createOtp(String patientId, String doctorId, String hospitalId,
-                          String consentRequestId, String phoneNumber, Instant expiresAt) {
+    public Otp createOtp(String domainKey, String phoneNumber, Instant expiresAt) {
         return Otp.builder()
-                .patientId(patientId)
-                .doctorId(doctorId)
-                .hospitalId(hospitalId)
-                .consentRequestId(consentRequestId)
+                .domainKey(domainKey)
                 .phoneHash(hashPhone(phoneNumber))
                 .status(OtpStatus.GENERATED)
                 .attempts(0)
