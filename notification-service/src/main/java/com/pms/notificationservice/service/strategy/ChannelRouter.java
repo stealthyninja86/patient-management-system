@@ -23,6 +23,7 @@ public class ChannelRouter {
         strategyMap.put(NotificationType.APPOINTMENT_BOOKING, otpChannelStrategy);
         strategyMap.put(NotificationType.APPOINTMENT_START, otpChannelStrategy);
         strategyMap.put(NotificationType.CONSENT_OTP, otpChannelStrategy);
+        strategyMap.put(NotificationType.USER_ONBOARDING, appointmentChannelStrategy);
     }
 
     public List<NotificationChannel> resolve(NotificationType notificationType) {

@@ -5,6 +5,7 @@ import com.pms.notificationservice.dto.event.AppointmentReminderNotification;
 import com.pms.notificationservice.dto.event.ConsentOtpNotification;
 import com.pms.notificationservice.dto.event.NotificationMessage;
 import com.pms.notificationservice.dto.event.PrescriptionReadyNotification;
+import com.pms.notificationservice.dto.event.UserOnboardingNotification;
 import com.pms.notificationservice.model.NotificationChannel;
 import com.pms.notificationservice.model.NotificationType;
 import com.pms.notificationservice.service.resolver.NameResolver;
@@ -90,6 +91,10 @@ public class SmtpEmailChannel implements NotificationProvider {
                 ctx.setVariable("hospitalName", n.hospitalName());
                 ctx.setVariable("prescriptionId", n.prescriptionId());
             }
+            case UserOnboardingNotification n -> {
+                ctx.setVariable("userName", n.userName());
+                ctx.setVariable("role", n.role());
+            }
         }
 
         String htmlContent = templateEngine.process(templateName, ctx);
@@ -120,6 +125,7 @@ public class SmtpEmailChannel implements NotificationProvider {
             case AppointmentReminderNotification n -> n.message();
             case ConsentOtpNotification n -> n.message();
             case PrescriptionReadyNotification n -> n.message();
+            case UserOnboardingNotification n -> n.message();
         };
     }
 
@@ -149,6 +155,7 @@ public class SmtpEmailChannel implements NotificationProvider {
             case APPOINTMENT_START -> "email/appointment-start-otp";
             case CONSENT_OTP -> "email/consent-otp";
             case PRESCRIPTION_READY -> "email/prescription-ready";
+            case USER_ONBOARDING -> "email/user-onboarding";
         };
     }
 
@@ -160,6 +167,7 @@ public class SmtpEmailChannel implements NotificationProvider {
             case APPOINTMENT_START -> "Appointment Starting Soon";
             case CONSENT_OTP -> "Consent Verification Code";
             case PRESCRIPTION_READY -> "Prescription Ready";
+            case USER_ONBOARDING -> "Welcome to Patient Management System";
         };
     }
 }

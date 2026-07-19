@@ -6,6 +6,7 @@ import com.pms.notificationservice.dto.event.ConsentOtpNotification;
 
 import com.pms.notificationservice.dto.event.NotificationMessage;
 import com.pms.notificationservice.dto.event.PrescriptionReadyNotification;
+import com.pms.notificationservice.dto.event.UserOnboardingNotification;
 import com.pms.notificationservice.dto.request.NotificationRequest;
 import com.pms.notificationservice.dto.response.NotificationResponseDTO;
 import com.pms.notificationservice.model.Notification;
@@ -35,6 +36,7 @@ public class NotificationMapper {
             case AppointmentReminderNotification n -> n.message();
             case ConsentOtpNotification n -> n.message();
             case PrescriptionReadyNotification n -> n.message();
+            case UserOnboardingNotification n -> n.message();
         };
     }
 
@@ -62,6 +64,10 @@ public class NotificationMapper {
                     request.eventId(), request.patientId(), request.type(),
                     request.channel(), request.recipient(), request.message(),
                     "", "", "");
+            case USER_ONBOARDING -> new UserOnboardingNotification(
+                    request.eventId(), request.patientId(), request.recipient(),
+                    request.patientName(), "", request.type(),
+                    request.channel(), request.recipient(), request.message());
         };
     }
 

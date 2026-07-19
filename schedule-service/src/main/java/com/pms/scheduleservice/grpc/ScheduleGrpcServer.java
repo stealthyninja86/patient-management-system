@@ -41,7 +41,7 @@ public class ScheduleGrpcServer extends ScheduleServiceGrpc.ScheduleServiceImplB
         Optional<Appointment> appointmentOpt = appointmentRepository
                 .findFirstByDoctorIdAndPatientIdAndStatusIn(
                         request.getDoctorId(), request.getPatientId(),
-                        List.of(AppointmentStatus.BOOKED, AppointmentStatus.ONGOING));
+                        List.of(AppointmentStatus.BOOKED, AppointmentStatus.ONGOING, AppointmentStatus.COMPLETED));
 
         if (appointmentOpt.isPresent()) {
             builder.setHasOngoing(true);

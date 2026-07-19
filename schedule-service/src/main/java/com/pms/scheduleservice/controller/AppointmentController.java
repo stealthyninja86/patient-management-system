@@ -136,4 +136,10 @@ public class AppointmentController {
         log.info("Dev bypass: confirming appointment {} without OTP", id);
         return ResponseEntity.ok(appointmentFacade.confirmBookingDev(id));
     }
+
+    @PostMapping("/{id}/start-dev")
+    public ResponseEntity<AppointmentResponseDTO> startAppointmentDev(@PathVariable String id) {
+        log.info("Dev bypass: starting appointment {} without OTP", id);
+        return ResponseEntity.ok(appointmentFacade.confirmStartDev(id));
+    }
 }

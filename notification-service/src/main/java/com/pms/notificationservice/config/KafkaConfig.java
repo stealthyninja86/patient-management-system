@@ -2,6 +2,7 @@ package com.pms.notificationservice.config;
 
 import com.pms.notificationservice.dto.event.AppointmentEventDTO;
 import com.pms.notificationservice.dto.event.PrescriptionPdfGeneratedEventDTO;
+import com.pms.notificationservice.dto.event.UserRegistrationEventDTO;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,27 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, PrescriptionPdfGeneratedEventDTO> prescriptionKafkaListenerContainerFactory(
             ConsumerFactory<String, PrescriptionPdfGeneratedEventDTO> consumerFactory) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, PrescriptionPdfGeneratedEventDTO>();
+        factory.setConsumerFactory(consumerFactory);
+        factory.setCommonErrorHandler(errorHandler());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, UserRegistrationEventDTO> userRegistrationConsumerFactory(
+            KafkaProperties properties) {
+        var config = new HashMap<>(properties.buildConsumerProperties(null));
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, UserRegistrationEventDTO.class.getName());
+        JsonDeserializer<UserRegistrationEventDTO> jsonDeserializer = new JsonDeserializer<>();
+        return new DefaultKafkaConsumerFactory<>(
+                config,
+                new StringDeserializer(),
+                new ErrorHandlingDeserializer<>(jsonDeserializer));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, UserRegistrationEventDTO> userRegistrationKafkaListenerContainerFactory(
+            ConsumerFactory<String, UserRegistrationEventDTO> consumerFactory) {
+        var factory = new ConcurrentKafkaListenerContainerFactory<String, UserRegistrationEventDTO>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler());
         return factory;

@@ -52,12 +52,12 @@ scrape_configs:
         labels:
           application: 'notification-service'
 
-  - job_name: 'analytics-service'
+  - job_name: 'timeline-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['analytics-service:4002']
+      - targets: ['timeline-service:4002']
         labels:
-          application: 'analytics-service'
+          application: 'timeline-service'
 
   - job_name: 'kafka-exporter'
     static_configs:

@@ -87,6 +87,7 @@ public class AppointmentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<DoctorPatientDTO> getPatientsByDoctor(String doctorId) {
         log.debug("Fetching patients by doctor: {}", doctorId);
         return appointmentRepository.findByDoctorId(doctorId).stream()
