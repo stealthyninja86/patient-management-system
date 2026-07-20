@@ -179,6 +179,7 @@ public class AuthServerConfig {
 
                         if(user.getDoctorId() != null) {
                             context.getClaims().claim("doctorId", user.getDoctorId());
+                            context.getClaims().claim("hospitalId", user.getHospitalId());
                         }
                         if(user.getPatientId() != null) {
                             context.getClaims().claim("patientId", user.getPatientId());

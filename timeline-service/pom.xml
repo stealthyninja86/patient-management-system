@@ -35,6 +35,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>mongodb</artifactId>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-netty-shaded</artifactId>
                 <version>${grpc.version}</version>

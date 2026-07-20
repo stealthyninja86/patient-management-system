@@ -24,6 +24,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/patients").hasAnyRole("ADMIN", "PATIENT")
                         .requestMatchers(HttpMethod.GET, "/patients/**").authenticated()
+                        .requestMatchers("/consent/**").hasRole("PATIENT")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

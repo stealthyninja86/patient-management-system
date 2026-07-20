@@ -1,5 +1,7 @@
 package com.pms.authservice.config;
 
+import com.nimbusds.jose.jwk.RSAKey;
+import java.security.interfaces.RSAPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +14,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
@@ -47,7 +51,7 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.securityMatcher("/register/**", "/token",
+        http.securityMatcher("/register/**", "/admin/**", "/token",
                 "/hospitals", "/departments", "/swagger-ui/**",
                 "/v3/api-docs/**", "/actuator/**")
                 .authorizeHttpRequests(authorize ->
@@ -55,6 +59,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(RSAKey rsaKey) throws Exception {
+        return NimbusJwtDecoder.withPublicKey(
+            (RSAPublicKey) rsaKey.toPublicKey()
+        ).build();
     }
 
     @Bean

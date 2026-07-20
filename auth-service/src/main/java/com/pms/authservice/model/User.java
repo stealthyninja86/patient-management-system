@@ -68,14 +68,21 @@ public class User {
     public String getDoctorId() {
         return profiles.stream()
                 .filter(p -> p.getType() == ProfileType.DOCTOR)
-                .map(UserProfile::getExternalId)
+                .map(UserProfile::getDoctorId)
                 .findFirst().orElse(null);
     }
 
     public String getPatientId() {
         return profiles.stream()
                 .filter(p -> p.getType() == ProfileType.PATIENT)
-                .map(UserProfile::getExternalId)
+                .map(UserProfile::getPatientId)
+                .findFirst().orElse(null);
+    }
+
+    public String getHospitalId() {
+        return profiles.stream()
+                .filter(p -> p.getType() == ProfileType.DOCTOR)
+                .map(UserProfile::getHospitalId)
                 .findFirst().orElse(null);
     }
 }

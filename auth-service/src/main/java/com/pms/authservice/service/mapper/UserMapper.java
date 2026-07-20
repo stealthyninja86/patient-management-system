@@ -28,7 +28,8 @@ public class UserMapper {
         user.setEmail(request.email());
         user.setPassword(encodedPassword);
         user.setRole(Role.DOCTOR);
-        user.addProfile(new UserProfile(user, ProfileType.DOCTOR, doctorId));
+        UserProfile profile = new UserProfile(user, ProfileType.DOCTOR, doctorId, null, request.hospitalId());
+        user.addProfile(profile);
         return user;
     }
 
@@ -37,7 +38,8 @@ public class UserMapper {
         user.setEmail(request.email());
         user.setPassword(encodedPassword);
         user.setRole(Role.PATIENT);
-        user.addProfile(new UserProfile(user, ProfileType.PATIENT, patientId));
+        UserProfile profile = new UserProfile(user, ProfileType.PATIENT, null, patientId, null);
+        user.addProfile(profile);
         return user;
     }
 

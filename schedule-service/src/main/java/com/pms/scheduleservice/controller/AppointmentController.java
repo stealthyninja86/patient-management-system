@@ -5,6 +5,7 @@ import com.pms.scheduleservice.dto.request.ConfirmAppointmentRequestDTO;
 import com.pms.scheduleservice.dto.response.AppointmentResponseDTO;
 import com.pms.scheduleservice.dto.response.DoctorPatientDTO;
 import com.pms.scheduleservice.dto.request.RescheduleRequestDTO;
+import com.pms.scheduleservice.grpc.PatientGrpcClient;
 import com.pms.scheduleservice.model.AppointmentStatus;
 import com.pms.scheduleservice.service.facade.AppointmentFacade;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,9 +27,12 @@ public class AppointmentController {
     private static final Logger log = LoggerFactory.getLogger(AppointmentController.class);
 
     private final AppointmentFacade appointmentFacade;
+    private final PatientGrpcClient patientGrpcClient;
 
-    public AppointmentController(AppointmentFacade appointmentFacade) {
+    public AppointmentController(AppointmentFacade appointmentFacade,
+                                 PatientGrpcClient patientGrpcClient) {
         this.appointmentFacade = appointmentFacade;
+        this.patientGrpcClient = patientGrpcClient;
     }
 
     @GetMapping
@@ -36,14 +42,33 @@ public class AppointmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AppointmentResponseDTO> getAppointmentById(@PathVariable String id) {
+    public ResponseEntity<AppointmentResponseDTO> getAppointmentById(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String id) {
         log.info("REST request to get appointment by id: {}", id);
-        return ResponseEntity.ok(appointmentFacade.getAppointmentById(id));
+        AppointmentResponseDTO response = appointmentFacade.getAppointmentById(id);
+        String role = jwt.getClaimAsString("role");
+        if ("DOCTOR".equals(role)) {
+            String hospitalId = jwt.getClaimAsString("hospitalId");
+            if (hospitalId == null || !patientGrpcClient.checkConsent(response.patientId(), hospitalId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/by-patient/{patientId}")
-    public ResponseEntity<List<AppointmentResponseDTO>> getAppointmentsByPatient(@PathVariable String patientId) {
+    public ResponseEntity<List<AppointmentResponseDTO>> getAppointmentsByPatient(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String patientId) {
         log.info("REST request to get appointments by patient: {}", patientId);
+        String role = jwt.getClaimAsString("role");
+        if ("DOCTOR".equals(role)) {
+            String hospitalId = jwt.getClaimAsString("hospitalId");
+            if (hospitalId == null || !patientGrpcClient.checkConsent(patientId, hospitalId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         return ResponseEntity.ok(appointmentFacade.getAppointmentsByPatient(patientId));
     }
 

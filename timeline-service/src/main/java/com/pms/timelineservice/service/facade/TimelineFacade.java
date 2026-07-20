@@ -92,8 +92,10 @@ public class TimelineFacade {
     public Optional<TimelineResponse> getTimeline(String patientId, String requesterId, String role) {
         switch (role) {
             case "DOCTOR" -> {
-                String hospitalId = redisTemplate.opsForValue().get("doctor:hospital:" + requesterId);
-                if (hospitalId == null || !consentGate.hasConsent(patientId, hospitalId)) {
+                Jwt jwt = getJwt();
+                if (jwt == null) return Optional.empty();
+                String hospitalId = jwt.getClaimAsString("hospitalId");
+                if (hospitalId == null || hospitalId.isBlank() || !consentGate.hasConsent(patientId, hospitalId)) {
                     return Optional.empty();
                 }
             }

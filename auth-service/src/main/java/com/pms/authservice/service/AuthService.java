@@ -10,14 +10,19 @@ import com.pms.authservice.dto.response.HospitalDTO;
 import com.pms.authservice.dto.response.PatientRegisterResponseDTO;
 import com.pms.authservice.grpc.HospitalGrpcClient;
 import com.pms.authservice.model.Role;
+import com.pms.authservice.model.User;
 import com.pms.authservice.service.strategy.RegistrationStrategy;
 import com.pms.authservice.service.strategy.RegistrationStrategyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -27,14 +32,17 @@ public class AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtEncoder jwtEncoder;
     private final HospitalGrpcClient hospitalGrpcClient;
     private final RegistrationStrategyProvider strategyProvider;
 
     public AuthService(UserService userService, PasswordEncoder passwordEncoder,
+                       JwtEncoder jwtEncoder,
                        HospitalGrpcClient hospitalGrpcClient,
                        RegistrationStrategyProvider strategyProvider) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.jwtEncoder = jwtEncoder;
         this.hospitalGrpcClient = hospitalGrpcClient;
         this.strategyProvider = strategyProvider;
     }
@@ -68,6 +76,38 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(request.password());
         RegistrationStrategy<DoctorRegisterRequestDTO, DoctorRegisterResponseDTO> strategy = strategyProvider.getStrategy(Role.DOCTOR);
         return strategy.register(request, encodedPassword);
+    }
+
+    public Map<String, String> generateToken(String email, String password) {
+        User user = userService.findByEmail(email).orElse(null);
+        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+            return null;
+        }
+
+        Instant now = Instant.now();
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
+                .issuer("http://auth-service:4005")
+                .subject(user.getEmail())
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(3600))
+                .claim("role", user.getRole().name())
+                .claim("userId", user.getId().toString());
+
+        if (user.getDoctorId() != null) {
+            claimsBuilder.claim("doctorId", user.getDoctorId());
+            claimsBuilder.claim("hospitalId", user.getHospitalId());
+        }
+        if (user.getPatientId() != null) {
+            claimsBuilder.claim("patientId", user.getPatientId());
+        }
+
+        String token = jwtEncoder.encode(JwtEncoderParameters.from(claimsBuilder.build())).getTokenValue();
+        logger.info("Generated token for user: {} - role={}", email, user.getRole().name());
+        return Map.of(
+                "token", token,
+                "role", user.getRole().name(),
+                "userId", user.getId().toString()
+        );
     }
 
     @Transactional

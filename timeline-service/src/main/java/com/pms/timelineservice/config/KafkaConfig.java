@@ -3,6 +3,7 @@ package com.pms.timelineservice.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pms.timelineservice.dto.event.AppointmentEvent;
 import com.pms.timelineservice.dto.event.ConsentGrantedEvent;
+import com.pms.timelineservice.dto.event.ConsentRevokedEvent;
 import com.pms.timelineservice.dto.event.PrescriptionPdfGeneratedEvent;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -81,6 +82,29 @@ public class KafkaConfig {
             consentKafkaListenerContainerFactory(
                     ConsumerFactory<String, ConsentGrantedEvent> consumerFactory) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, ConsentGrantedEvent>();
+        factory.setConsumerFactory(consumerFactory);
+        return factory;
+    }
+
+    // ── Consent revoked events (JSON) ──
+
+    @Bean
+    public ConsumerFactory<String, ConsentRevokedEvent> consentRevokedConsumerFactory(
+            KafkaProperties properties, ObjectMapper objectMapper) {
+        var config = properties.buildConsumerProperties(null);
+        var jsonDeser = new JsonDeserializer<>(ConsentRevokedEvent.class, objectMapper);
+        jsonDeser.setUseTypeHeaders(false);
+        return new DefaultKafkaConsumerFactory<>(
+                config,
+                new StringDeserializer(),
+                new ErrorHandlingDeserializer<>(jsonDeser));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, ConsentRevokedEvent>
+            consentRevokedKafkaListenerContainerFactory(
+                    ConsumerFactory<String, ConsentRevokedEvent> consumerFactory) {
+        var factory = new ConcurrentKafkaListenerContainerFactory<String, ConsentRevokedEvent>();
         factory.setConsumerFactory(consumerFactory);
         return factory;
     }

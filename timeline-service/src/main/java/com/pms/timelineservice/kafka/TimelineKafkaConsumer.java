@@ -2,6 +2,7 @@ package com.pms.timelineservice.kafka;
 
 import com.pms.timelineservice.dto.event.AppointmentEvent;
 import com.pms.timelineservice.dto.event.ConsentGrantedEvent;
+import com.pms.timelineservice.dto.event.ConsentRevokedEvent;
 import com.pms.timelineservice.dto.event.PrescriptionPdfGeneratedEvent;
 import com.pms.timelineservice.service.TimelineIngestionService;
 import org.slf4j.Logger;
@@ -68,6 +69,15 @@ public class TimelineKafkaConsumer {
     public void consumeConsentGrantedEvent(ConsentGrantedEvent event) {
         String key = "consent:" + event.patientId() + ":" + event.hospitalId();
         redis.opsForValue().set(key, "granted", Duration.ofSeconds(event.ttlSeconds()));
+    }
+
+    @KafkaListener(topics = "consent-revoked-events",
+            containerFactory = "consentRevokedKafkaListenerContainerFactory",
+            groupId = "timeline-service")
+    public void consumeConsentRevokedEvent(ConsentRevokedEvent event) {
+        String key = "consent:" + event.patientId() + ":" + event.hospitalId();
+        redis.delete(key);
+        log.info("Consent revoked for patient:{}, hospital:{} — Redis key deleted", event.patientId(), event.hospitalId());
     }
 
     @DltHandler

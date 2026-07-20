@@ -25,15 +25,14 @@ public class ConsentService {
     }
 
     @Transactional
-    public Consent createConsent(String patientId, String doctorId, String hospitalId) {
-        log.info("Creating consent for patient: {}, doctor: {}, hospital: {}",
-                patientId, doctorId, hospitalId);
+    public Consent createConsent(String patientId, String hospitalId) {
+        log.info("Creating consent for patient: {}, hospital: {}",
+                patientId, hospitalId);
 
         String consentRequestId = idGenerator.nextId("CSNT", "consent_seq");
         Consent consent = new Consent();
         consent.setConsentRequestId(consentRequestId);
         consent.setPatientId(patientId);
-        consent.setDoctorId(doctorId);
         consent.setHospitalId(hospitalId);
         consent.setStatus(ConsentStatus.PENDING_OTP);
         return consentRepository.save(consent);
@@ -53,5 +52,18 @@ public class ConsentService {
         return consentRepository.findByConsentRequestId(consentRequestId)
                 .orElseThrow(() -> new ConsentNotFoundException(
                         "Consent not found: " + consentRequestId));
+    }
+
+    @Transactional
+    public Consent revokeConsent(String consentRequestId) {
+        log.info("Revoking consent: {}", consentRequestId);
+        Consent consent = consentRepository.findByConsentRequestId(consentRequestId)
+                .orElseThrow(() -> new ConsentNotFoundException(
+                        "Consent not found: " + consentRequestId));
+        if (consent.getStatus() != ConsentStatus.ACTIVE) {
+            throw new IllegalStateException("Only active consent can be revoked. Current status: " + consent.getStatus());
+        }
+        consent.setStatus(ConsentStatus.REVOKED);
+        return consentRepository.save(consent);
     }
 }

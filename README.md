@@ -12,9 +12,6 @@
 
 Healthcare data is fragmented. A patient's records live across multiple hospitals, clinics, and pharmacies — each with its own system, its own login, its own paper trail. When a doctor needs a patient's full history, there's no unified way to get it. Cross-hospital data sharing is cumbersome, consent management is ad-hoc, and medical records often lack proper audit trails.
 
-
----
-
 ### A Real Scenario
 
 Over the past two years, **Sameera** has visited three different hospitals—a neighborhood clinic for routine checkups, a pulmonologist for recurring breathing problems, and an emergency department after a severe allergic reaction. Each hospital maintains its own electronic health record system. None of them automatically share information with one another.
@@ -38,15 +35,9 @@ Without a complete medication history, Dr. Arjun cannot confidently perform medi
 
 ---
 
-### Why This Matters
-
-Healthcare has become increasingly digital, but medical records often remain fragmented across hospitals and healthcare providers. Patients are frequently responsible for piecing together their own medical history, while clinicians spend valuable consultation time requesting records, verifying medications, and repeating tests that have already been performed elsewhere. 
-
-**Patients shouldn't have to remember every prescription they've ever received. Doctors shouldn't have to make clinical decisions with incomplete information.**
-
 ## The Solution
 
-A secure platform where patients own their medical data across hospitals, doctors access it with explicit consent, and every record is immutably tracked.
+**Orbit** is a secure health data platform that connects across hospitals. Patients register once and access their complete medical timeline — prescriptions, diagnoses, upcoming appointments — across every hospital they've visited. Doctors view a patient's full history with their explicit, time-bound consent. Every record is immutably tracked, every critical action is verified through OTP, and every access is audited.
 
 ---
 
@@ -62,7 +53,7 @@ Register under a hospital. Create available time slots. Manage appointments thro
 
 ### For Admins
 
-Add and manage hospitals, departments, and doctors. Full visibility across the entire platform.
+Add and manage hospitals, departments, and doctors. Register doctors under hospitals. Create and manage time slots. Handle the full appointment lifecycle — book, start, complete, cancel. Full visibility across the entire platform.
 
 ### Behind the Scenes
 
@@ -70,7 +61,7 @@ Add and manage hospitals, departments, and doctors. Full visibility across the e
 - **Event-driven core** — appointments, prescriptions, consent grants, and user registrations all produce Kafka events consumed by multiple services. No tight coupling, no lost messages.
 - **CQRS read model** — the patient timeline is a pre-computed view in MongoDB, populated by Kafka consumers. Reads are fast and don't aggregate from multiple services at request time.
 - **Transactional outbox pattern** — every Kafka event is written to a database table within the same transaction as the domain change, then reliably published by a background poller. No events are lost on failure.
-- **Consent-gated access** — patients grant cross-hospital access via OTP. The consent is cached in Redis and checked at read time before any data is returned. 24-hour TTL with automatic expiry.
+- **Consent-gated access** — patients grant cross-hospital access via OTP. The consent is cached in Redis and checked at read time before any data is returned. 7-day TTL with automatic expiry.
 - **Immutable prescriptions** — once created, a prescription is never modified. Full audit trail with version tracking. Rate-limited and idempotency-key protected.
 - **Async PDF generation** — prescriptions trigger a Kafka pipeline that generates PDFs in the background using Thymeleaf + Flying Saucer. The doctor gets a response immediately.
 - **AI integration** — clinical summaries powered by Spring AI with Ollama (gemma4) and SearXNG for web-grounded context. Available to both doctors and patients.

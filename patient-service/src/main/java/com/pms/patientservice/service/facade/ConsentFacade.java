@@ -2,6 +2,7 @@ package com.pms.patientservice.service.facade;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pms.patientservice.dto.event.ConsentGrantedEvent;
+import com.pms.patientservice.dto.event.ConsentRevokedEvent;
 import com.pms.patientservice.dto.request.ConsentRequestDTO;
 import com.pms.patientservice.grpc.OtpGrpcClient;
 import com.pms.patientservice.model.Consent;
@@ -23,7 +24,7 @@ public class ConsentFacade {
 
     private static final Logger log = LoggerFactory.getLogger(ConsentFacade.class);
 
-    private static final int CONSENT_TTL_SECONDS = 86400;
+    private static final int CONSENT_TTL_SECONDS = 604800;
 
     private final ConsentService consentService;
     private final OtpGrpcClient otpGrpcClient;
@@ -42,11 +43,11 @@ public class ConsentFacade {
 
     @Transactional
     public Map<String, Object> requestConsent(ConsentRequestDTO request) {
-        log.debug("Requesting consent for patient: {}, doctor: {}, hospital: {}",
-                request.patientId(), request.doctorId(), request.hospitalId());
+        log.debug("Requesting consent for patient: {}, hospital: {}",
+                request.patientId(), request.hospitalId());
 
         Consent consent = consentService.createConsent(
-                request.patientId(), request.doctorId(), request.hospitalId());
+                request.patientId(), request.hospitalId());
 
         OptService.GenerateOtpRequest otpRequest = OptService.GenerateOtpRequest.newBuilder()
                 .setDomainKey("consent:" + consent.getConsentRequestId())
@@ -60,6 +61,27 @@ public class ConsentFacade {
         return Map.of(
                 "consentRequestId", consent.getConsentRequestId(),
                 "message", "OTP sent to registered phone/email"
+        );
+    }
+
+    public boolean isOwnConsent(String consentRequestId, String patientId) {
+        if (patientId == null) return false;
+        try {
+            Consent consent = consentService.getByConsentRequestId(consentRequestId);
+            return patientId.equals(consent.getPatientId());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> revokeConsent(String consentRequestId) {
+        log.debug("Revoking consent: {}", consentRequestId);
+        Consent consent = consentService.revokeConsent(consentRequestId);
+        writeConsentRevokedEvent(consent);
+        return Map.of(
+                "status", "REVOKED",
+                "message", "Consent revoked"
         );
     }
 
@@ -84,6 +106,30 @@ public class ConsentFacade {
             log.debug("Outbox event saved: CONSENT_GRANTED for consent: {}", consent.getConsentRequestId());
         } catch (Exception e) {
             log.error("Failed to write outbox event for consent: {}", consent.getConsentRequestId(), e);
+        }
+    }
+
+    private void writeConsentRevokedEvent(Consent consent) {
+        try {
+            ConsentRevokedEvent event = new ConsentRevokedEvent(
+                    consent.getPatientId(), consent.getHospitalId());
+            String payload = objectMapper.writeValueAsString(event);
+            OutboxEvent outboxEvent = new OutboxEvent(
+                    UUID.randomUUID(),
+                    "CONSENT",
+                    consent.getConsentRequestId(),
+                    "CONSENT_REVOKED",
+                    "consent-revoked-events",
+                    payload,
+                    consent.getPatientId(),
+                    false,
+                    LocalDateTime.now(),
+                    null
+            );
+            outboxRepository.save(outboxEvent);
+            log.debug("Outbox event saved: CONSENT_REVOKED for consent: {}", consent.getConsentRequestId());
+        } catch (Exception e) {
+            log.error("Failed to write outbox event for consent revoke: {}", consent.getConsentRequestId(), e);
         }
     }
 

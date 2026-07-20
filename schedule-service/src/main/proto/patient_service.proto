@@ -6,10 +6,20 @@ option java_package = "patient";
 service PatientService {
   rpc GetPatientById(PatientByIdRequest) returns (PatientResponse);
   rpc CreatePatient(CreatePatientRequest) returns (PatientResponse);
+  rpc CheckConsent(ConsentCheckRequest) returns (ConsentCheckResponse);
 }
 
 message PatientByIdRequest {
   string patientId = 1;
+}
+
+message ConsentCheckRequest {
+  string patientId = 1;
+  string hospitalId = 2;
+}
+
+message ConsentCheckResponse {
+  bool hasConsent = 1;
 }
 
 message CreatePatientRequest {

@@ -2,7 +2,11 @@ package com.pms.patientservice.grpc;
 
 import com.pms.patientservice.dto.request.PatientGrpcRequestDTO;
 import com.pms.patientservice.dto.response.PatientResponseDTO;
+import com.pms.patientservice.model.ConsentStatus;
+import com.pms.patientservice.repository.ConsentRepository;
 import com.pms.patientservice.service.facade.PatientFacade;
+import patient.ConsentCheckRequest;
+import patient.ConsentCheckResponse;
 import patient.CreatePatientRequest;
 import patient.PatientByIdRequest;
 import patient.PatientResponse;
@@ -17,9 +21,11 @@ public class PatientGrpcServer extends PatientServiceImplBase {
 
     private static final Logger log = LoggerFactory.getLogger(PatientGrpcServer.class);
     private final PatientFacade patientFacade;
+    private final ConsentRepository consentRepository;
 
-    public PatientGrpcServer(PatientFacade patientFacade) {
+    public PatientGrpcServer(PatientFacade patientFacade, ConsentRepository consentRepository) {
         this.patientFacade = patientFacade;
+        this.consentRepository = consentRepository;
     }
 
     @Override
@@ -74,6 +80,23 @@ public class PatientGrpcServer extends PatientServiceImplBase {
             responseObserver.onCompleted();
         } catch (Exception e) {
             log.error("Error creating patient: {}", e.getMessage());
+            responseObserver.onError(e);
+        }
+    }
+
+    @Override
+    public void checkConsent(ConsentCheckRequest request, StreamObserver<ConsentCheckResponse> responseObserver) {
+        log.info("gRPC request to check consent for patient: {}, hospital: {}", request.getPatientId(), request.getHospitalId());
+        try {
+            boolean hasConsent = consentRepository.existsByPatientIdAndHospitalIdAndStatus(
+                    request.getPatientId(), request.getHospitalId(), ConsentStatus.ACTIVE);
+            ConsentCheckResponse response = ConsentCheckResponse.newBuilder()
+                    .setHasConsent(hasConsent)
+                    .build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            log.error("Error checking consent: {}", e.getMessage());
             responseObserver.onError(e);
         }
     }

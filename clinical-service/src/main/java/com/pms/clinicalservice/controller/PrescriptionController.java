@@ -3,6 +3,7 @@ package com.pms.clinicalservice.controller;
 import com.pms.clinicalservice.dto.request.*;
 import com.pms.clinicalservice.dto.response.AISummaryResponse;
 import com.pms.clinicalservice.dto.response.PrescriptionResponseDTO;
+import com.pms.clinicalservice.grpc.PatientGrpcClient;
 import com.pms.clinicalservice.service.facade.PrescriptionFacade;
 import com.pms.clinicalservice.service.PrescriptionService;
 import org.slf4j.Logger;
@@ -24,23 +25,44 @@ public class PrescriptionController {
     private final Logger logger = LoggerFactory.getLogger(PrescriptionController.class);
     private final PrescriptionFacade prescriptionFacade;
     private final PrescriptionService prescriptionService;
+    private final PatientGrpcClient patientGrpcClient;
 
     public PrescriptionController(PrescriptionFacade prescriptionFacade,
-                                  PrescriptionService prescriptionService) {
+                                  PrescriptionService prescriptionService,
+                                  PatientGrpcClient patientGrpcClient) {
         this.prescriptionFacade = prescriptionFacade;
         this.prescriptionService = prescriptionService;
+        this.patientGrpcClient = patientGrpcClient;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PrescriptionResponseDTO> getPrescriptionById(@PathVariable String id) {
+    public ResponseEntity<PrescriptionResponseDTO> getPrescriptionById(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String id) {
         logger.info("GET /prescriptions/{}", id);
         PrescriptionResponseDTO response = prescriptionService.getPrescriptionById(id);
+        String role = jwt.getClaimAsString("role");
+        if ("DOCTOR".equals(role)) {
+            String hospitalId = jwt.getClaimAsString("hospitalId");
+            if (hospitalId == null || !patientGrpcClient.checkConsent(response.patientId(), hospitalId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/by-patient/{patientId}")
-    public ResponseEntity<List<PrescriptionResponseDTO>> getPrescriptionsByPatientId(@PathVariable String patientId) {
+    public ResponseEntity<List<PrescriptionResponseDTO>> getPrescriptionsByPatientId(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String patientId) {
         logger.info("GET /prescriptions/by-patient/{}", patientId);
+        String role = jwt.getClaimAsString("role");
+        if ("DOCTOR".equals(role)) {
+            String hospitalId = jwt.getClaimAsString("hospitalId");
+            if (hospitalId == null || !patientGrpcClient.checkConsent(patientId, hospitalId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         List<PrescriptionResponseDTO> responses = prescriptionService.getPrescriptionsByPatientId(patientId);
         return ResponseEntity.ok(responses);
     }

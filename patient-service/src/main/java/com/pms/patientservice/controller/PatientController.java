@@ -2,6 +2,8 @@ package com.pms.patientservice.controller;
 
 import com.pms.patientservice.dto.request.PatientRequestDTO;
 import com.pms.patientservice.dto.response.PatientResponseDTO;
+import com.pms.patientservice.model.ConsentStatus;
+import com.pms.patientservice.repository.ConsentRepository;
 import com.pms.patientservice.service.facade.PatientFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,15 +26,21 @@ public class PatientController {
     private static final Logger log = LoggerFactory.getLogger(PatientController.class);
 
     private final PatientFacade patientFacade;
+    private final ConsentRepository consentRepository;
 
-    public PatientController(PatientFacade patientFacade) {
+    public PatientController(PatientFacade patientFacade, ConsentRepository consentRepository) {
         this.patientFacade = patientFacade;
+        this.consentRepository = consentRepository;
     }
 
     @GetMapping
     @Operation(summary = "Get Patients")
-    public ResponseEntity<List<PatientResponseDTO>> getAllPatients() {
+    public ResponseEntity<List<PatientResponseDTO>> getAllPatients(@AuthenticationPrincipal Jwt jwt) {
         log.info("REST request to get all patients");
+        String role = jwt.getClaimAsString("role");
+        if ("DOCTOR".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(patientFacade.getAllPatients());
     }
 
@@ -50,15 +60,35 @@ public class PatientController {
 
     @GetMapping("/{patientId}")
     @Operation(summary = "Get Patient by patientId")
-    public ResponseEntity<PatientResponseDTO> getPatientByPatientId(@PathVariable String patientId) {
+    public ResponseEntity<PatientResponseDTO> getPatientByPatientId(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String patientId) {
         log.info("REST request to get patient by patientId: {}", patientId);
+        String role = jwt.getClaimAsString("role");
+        if ("DOCTOR".equals(role)) {
+            String hospitalId = jwt.getClaimAsString("hospitalId");
+            if (hospitalId == null || !consentRepository.existsByPatientIdAndHospitalIdAndStatus(
+                    patientId, hospitalId, ConsentStatus.ACTIVE)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         return ResponseEntity.ok(patientFacade.getPatientByPatientId(patientId));
     }
 
     @GetMapping("/by-patient-id")
     @Operation(summary = "Get Patient by patientId (query param)")
-    public ResponseEntity<PatientResponseDTO> getPatientByPatientIdQuery(@RequestParam String patientId) {
+    public ResponseEntity<PatientResponseDTO> getPatientByPatientIdQuery(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam String patientId) {
         log.info("REST request to get patient by patientId: {}", patientId);
+        String role = jwt.getClaimAsString("role");
+        if ("DOCTOR".equals(role)) {
+            String hospitalId = jwt.getClaimAsString("hospitalId");
+            if (hospitalId == null || !consentRepository.existsByPatientIdAndHospitalIdAndStatus(
+                    patientId, hospitalId, ConsentStatus.ACTIVE)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         return ResponseEntity.ok(patientFacade.getPatientByPatientId(patientId));
     }
 

@@ -7,6 +7,7 @@ service PatientService {
   rpc GetPatientById(PatientByIdRequest) returns (PatientResponse);
   rpc CreatePatient(CreatePatientRequest) returns (PatientResponse);
   rpc DeletePatient(PatientDeleteRequest) returns (PatientDeleteResponse);
+  rpc CheckConsent(ConsentCheckRequest) returns (ConsentCheckResponse);
 }
 
 message PatientByIdRequest {
@@ -31,6 +32,15 @@ message PatientDeleteRequest {
 message PatientDeleteResponse {
   bool success = 1;
   string message = 2;
+}
+
+message ConsentCheckRequest {
+  string patientId = 1;
+  string hospitalId = 2;
+}
+
+message ConsentCheckResponse {
+  bool hasConsent = 1;
 }
 
 message PatientResponse {
